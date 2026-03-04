@@ -1,0 +1,17 @@
+import { db, customerTable} from "@/models/name";
+import { tablesDB } from "@/models/server/config";
+import { NextRequest, NextResponse } from "next/server";
+
+
+export async function POST(request: NextRequest) {
+    try {
+        const { userID } = await request.json();
+
+        const user = await tablesDB.getRow(db, customerTable, userID);
+
+        return NextResponse.json(user);
+
+    } catch (error) {
+        return NextResponse.json({ error });
+    }
+}
