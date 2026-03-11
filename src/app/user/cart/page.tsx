@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "react-toastify";
 import { IconMinus, IconPlus, IconMapPin } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-
+// @ts-ignore
+import { load } from "@cashfreepayments/cashfree-js";
 
 type CartItem = {
 	$id: string;
@@ -26,7 +27,14 @@ export default function CartPage() {
 	const [isOrdering, setIsOrdering] = useState(false);
 	const [addresses, setAddresses] = useState<any[]>([]);
 	const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
+	const [paymentMethod, setPaymentMethod] = useState<"cod" | "online">("online");
+	const [cashfree, setCashfree] = useState<any>(null);
 	const router = useRouter();
+
+	useEffect(() => {
+		// @ts-ignore
+		load({ mode: "sandbox" }).then((cf: any) => setCashfree(cf)).catch((err: any) => console.error("Cashfree SDK failed to load", err));
+	}, []);
 
 	useEffect(() => {
 		const fetchItemsAndAddresses = async () => {
@@ -79,6 +87,35 @@ export default function CartPage() {
 
 	const subtotal = items.reduce((s, it) => s + (Number(it.price) || 0) * (Number(it.quantity) || 0), 0);
 
+	const verifyPayment = async (orderId: string) => {
+		try {
+			const itemIds = userData.cartId || items.map((i) => i.$id);
+			const res = await axios.post("/api/user/online-order/verify-cashfree", {
+				orderId,
+				customerId: userData.$id,
+				addressID: selectedAddress,
+				itemId: itemIds,
+				totalAmount: subtotal,
+				shipping_charge: 0.0
+			});
+
+			if (res.data?.success) {
+				toast.success("Order placed successfully");
+				if (setUserData && userData.$id) {
+					await setUserData(userData.$id);
+				}
+				setItems([]);
+			} else {
+				toast.error("Payment verification failed");
+			}
+		} catch (err) {
+			console.error(err);
+			toast.error("Failed to verify payment");
+		} finally {
+			setIsOrdering(false);
+		}
+	}
+
 	const handleCreateOrder = async () => {
 		if (!userData || !userData.$id) {
 			toast.error("No customer data available");
@@ -94,32 +131,83 @@ export default function CartPage() {
 		}
 
 		setIsOrdering(true);
-		try {
-			const itemIds = userData.cartId || items.map((i) => i.$id);
-			const res = await axios.post("/api/user/online-order", {
-				customerId: userData.$id,
-				addressID: selectedAddress,
-				itemId: itemIds,
-				totalAmount: subtotal,
-				shipping_charge: 0.0,
-				paymentType: "cod",
-			});
 
-			if (res.data?.error) {
-				toast.error("Failed to create order");
-			} else {
-				toast.success("Order placed successfully");
-				// refresh customer data (will clear cart)
-				if (setUserData && userData.$id) {
-					await setUserData(userData.$id);
+		if (paymentMethod === "online") {
+			try {
+				if (!cashfree) {
+					toast.error("Payment SDK not initialized");
+					setIsOrdering(false);
+					return;
 				}
-				setItems([]);
+
+				const customerDetails = {
+					customerId: userData.$id,
+					totalAmount: subtotal,
+					name: userData.name,
+					email: userData.email,
+					phone: userData.phone || "9999999999"
+				};
+				
+				const sessionRes = await axios.post("/api/user/online-order/create-cashfree", customerDetails);
+				if (sessionRes.data?.error) {
+					toast.error("Could not initiate payment");
+					setIsOrdering(false);
+					return;
+				}
+
+				const paymentSessionId = sessionRes.data.payment_session_id;
+				const orderId = sessionRes.data.order_id;
+
+				let checkoutOptions = {
+					paymentSessionId: paymentSessionId,
+					redirectTarget: "_modal",
+				};
+
+				cashfree.checkout(checkoutOptions).then((result: any) => {
+					if(result.error){
+						toast.error(result.error.message || "Payment Failed");
+						setIsOrdering(false);
+					}
+					if(result.redirect){
+						console.log("Redirection");
+					}
+					if(result.paymentDetails){
+						verifyPayment(orderId);
+					}
+				});
+			} catch (error) {
+				console.error(error);
+				toast.error("Error initiating payment");
+				setIsOrdering(false);
 			}
-		} catch (err) {
-			console.error(err);
-			toast.error("Failed to create order");
-		} finally {
-			setIsOrdering(false);
+		} else {
+			try {
+				const itemIds = userData.cartId || items.map((i) => i.$id);
+				const res = await axios.post("/api/user/online-order", {
+					customerId: userData.$id,
+					addressID: selectedAddress,
+					itemId: itemIds,
+					totalAmount: subtotal,
+					shipping_charge: 0.0,
+					paymentType: "cod",
+				});
+
+				if (res.data?.error) {
+					toast.error("Failed to create order");
+				} else {
+					toast.success("Order placed successfully");
+					// refresh customer data (will clear cart)
+					if (setUserData && userData.$id) {
+						await setUserData(userData.$id);
+					}
+					setItems([]);
+				}
+			} catch (err) {
+				console.error(err);
+				toast.error("Failed to create order");
+			} finally {
+				setIsOrdering(false);
+			}
 		}
 	};
 
@@ -228,8 +316,9 @@ export default function CartPage() {
 					</div>
 
 					<div className="sm:p-4 p-2 border rounded bg-card">
-						<h2 className="font-semibold mb-2">Shipping details</h2>
-						<div className="grid gap-3">
+						<h2 className="font-semibold mb-2">Checkout details</h2>
+						<div className="grid gap-3 mb-6">
+							<h3 className="font-medium text-sm">Shipping Address</h3>
 							{addresses.length > 0 ? (
 								<div className="space-y-2">
 									{addresses.map((address) => (
@@ -242,7 +331,7 @@ export default function CartPage() {
 												checked={selectedAddress === address.$id}
 												onChange={(e) => setSelectedAddress(e.target.value)}
 											/>
-											<label htmlFor={address.$id} className="text-sm">
+											<label htmlFor={address.$id} className="text-sm cursor-pointer w-full">
 												<p>{address.location}</p>
 												<p>{address.city}, {address.state} {address.pincode}</p>
 												<p>{address.phone}</p>
@@ -253,15 +342,42 @@ export default function CartPage() {
 							) : (
 								<p>No addresses found. Please <a href="/user" className="text-green-600 hover:underline">add an address</a>.</p>
 							)}
-							<div className="flex justify-end">
-								<button
-									onClick={handleCreateOrder}
-									disabled={isOrdering || addresses.length === 0}
-									className="px-4 py-2 bg-green-600 text-white font-semibold rounded disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed active:scale-95"
-								>
-									{isOrdering ? "Placing order..." : "Place Order"}
-								</button>
+						</div>
+						
+						<div className="grid gap-3 mb-6">
+							<h3 className="font-medium text-sm">Payment Method</h3>
+							<div className="flex gap-4">
+								<label className="flex items-center gap-2 border p-3 rounded-md cursor-pointer flex-1">
+									<input 
+										type="radio" 
+										name="paymentMethod" 
+										value="online" 
+										checked={paymentMethod === "online"} 
+										onChange={() => setPaymentMethod("online")} 
+									/>
+									<span>Online Payment (Cashfree)</span>
+								</label>
+								<label className="flex items-center gap-2 border p-3 rounded-md cursor-pointer flex-1">
+									<input 
+										type="radio" 
+										name="paymentMethod" 
+										value="cod" 
+										checked={paymentMethod === "cod"} 
+										onChange={() => setPaymentMethod("cod")} 
+									/>
+									<span>Cash on Delivery (COD)</span>
+								</label>
 							</div>
+						</div>
+
+						<div className="flex justify-end">
+							<button
+								onClick={handleCreateOrder}
+								disabled={isOrdering || addresses.length === 0}
+								className="px-4 py-2 bg-green-600 text-white font-semibold rounded disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed active:scale-95"
+							>
+								{isOrdering ? "Processing..." : paymentMethod === "online" ? "Pay Now" : "Place Order"}
+							</button>
 						</div>
 					</div>
 				</div>

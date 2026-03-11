@@ -74,7 +74,7 @@ export default function Register() {
               console.log(avatar);;
               
 
-              const userResponse = await axios.post("/api/user", {ID, name, email, avatar})
+              const userResponse = await axios.post("/api/user/register", {ID, name, email, avatar})
               console.log(userResponse.data);
            
             const loginResponse = await login(email.toString(), password.toString());
@@ -88,35 +88,25 @@ export default function Register() {
   };
 
   const continueWithGoogle = ()=>{
-    account.createOAuth2Session(
-      OAuthProvider.Google,
-      'http://localhost:3000/session',
-      'http://localhost:3000/login'
-    )
-  }
+      account.createOAuth2Session(
+        OAuthProvider.Google,
+        `${process.env.NEXT_PUBLIC_DOMAIN_NAME}/session`,
+        `${process.env.NEXT_PUBLIC_DOMAIN_NAME}/login`
+      )
+    }
 
 
 
   return (
-    <>
-    {isLoading && (<div className='flex justify-center mb-5'><LoaderOne/></div>)}
-    <div className="border border-gray-600 shadow-input mx-auto w-full max-w-md rounded-none bg-white p-4 md:rounded-2xl md:p-8 dark:bg-black">
+    <div className='flex justify-center items-center h-screen p-2'>
+    <div className='flex flex-col gap-4 p-2 w-100 border rounded-xl shadow-2xl bg-card'>
       <h1 className="flex justify-center text-xl font-bold text-neutral-800 dark:text-neutral-200">
         Register
       </h1>
-      <p className="mt-2 max-w-sm text-sm text-neutral-600 dark:text-neutral-300">
-              If you already have an account, then please{" "}
-                <Link href="/login" className="text-orange-500 underline">
-                    login
-                </Link>{" "}
-                to our site
-      </p>
+      
 
-      {error && (
-          <p className="mt-8 text-center text-sm text-red-500 dark:text-red-400">{error}</p>
-      )}
  
-      <form className="my-8" onSubmit={handleSubmit}>
+      <form className="my-2" onSubmit={handleSubmit}>
         
           <LabelInputContainer className="mb-4">
             <Label htmlFor="fullname">Full name</Label>
@@ -135,20 +125,22 @@ export default function Register() {
         
  
         <button
-          className="group/btn relative block h-10 w-full rounded-md bg-linear-to-br from-black to-neutral-600 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:bg-zinc-800 dark:from-zinc-900 dark:to-zinc-900 dark:shadow-[0px_1px_0px_0px_#27272a_inset,0px_-1px_0px_0px_#27272a_inset]"
+          className="group/btn relative block h-10 w-full cursor-pointer active:scale-95 items-center justify-center rounded-md bg-linear-to-br from-black to-neutral-600 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:bg-zinc-800 dark:from-zinc-900 dark:to-zinc-900 dark:shadow-[0px_1px_0px_0px_#27272a_inset,0px_-1px_0px_0px_#27272a_inset]"
           type="submit"
           disabled={isLoading}
         >
-          Sign up &rarr;
+          
+          {!isLoading ? <p className='font-semibold'>Sign up &rarr;</p> : <div className='pb-1 flex justify-center items-center'><LoaderOne /></div>}
+          
           <BottomGradient />
         </button>
  
-        <div className="my-8 h-px w-full bg-linear-to-r from-transparent via-neutral-300 to-transparent dark:via-neutral-700" />
+        <div className="my-4 h-px w-full bg-linear-to-r from-transparent via-neutral-300 to-transparent dark:via-neutral-700" />
  
         <div className="flex flex-col space-y-4">
           
           <button
-            className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black dark:bg-zinc-900 dark:shadow-[0px_0px_1px_1px_#262626]"
+            className="group/btn shadow-input relative flex h-10 w-full cursor-pointer active:scale-95 items-center justify-center space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black dark:bg-zinc-900 dark:shadow-[0px_0px_1px_1px_#262626]"
             type="button"
             disabled={isLoading}
             onClick={continueWithGoogle}
@@ -162,8 +154,20 @@ export default function Register() {
           
         </div>
       </form>
+
+      {error && (
+          <p className="text-center text-sm text-red-500 dark:text-red-400">{error}</p>
+      )}
+
+      <p className="max-w-sm text-sm text-neutral-600 dark:text-neutral-300">
+              If you already have an account, then please{" "}
+                <Link href="/login" className="text-orange-500 underline">
+                    login
+                </Link>{" "}
+                to our site
+      </p>
     </div>
-    </>
+    </div>
   );
 }
  

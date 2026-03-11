@@ -6,12 +6,13 @@ import { ID } from "node-appwrite";
 export async function POST(request: NextRequest) {
     try {
         const data = await request.json();
-        const { productId, productName, quantity, price } = data;
+        const { productId, productName, quantity, price, slug } = data;
         const response = await tablesDB.createRow(db, itemTable, ID.unique(), {
             productId,
             productName,
             quantity,
             price,
+            slug,
         });
         return NextResponse.json(response);
     } catch (error) {

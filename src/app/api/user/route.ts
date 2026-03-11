@@ -41,3 +41,22 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Failed to fetch online orders" }, { status: 500 });
   }
 }
+
+
+export async function PUT(request: NextRequest){
+  try {
+    const {ID} = await request.json()
+
+    const user = await tablesDB.getRow(db, customerTable, ID)
+
+    return NextResponse.json({
+      exists: true, user: user
+    })
+  } catch (error) {
+    return NextResponse.json({
+      exists: false
+    })
+  }
+
+
+}

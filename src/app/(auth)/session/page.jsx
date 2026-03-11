@@ -4,7 +4,7 @@ import React, {useEffect} from 'react'
 import { useAuthStore } from '@/store/Auth';
 import { redirect } from 'next/navigation';
 import { LoaderOne } from '@/components/ui/loader';
-import { account } from '@/models/client/config';
+import { account, avatars} from '@/models/client/config';
 import axios from 'axios';
 
 import { userTable, db } from "@/models/name";
@@ -38,8 +38,15 @@ function setSession() {
           console.log("user row exists");
         }else{
           console.log("user not exists");
+
+          const avatar = avatars.getInitials({
+            name: name,
+            width: 100,
+            height: 100,
+            background: "148F24",
+          })
           
-          const response = await axios.post("/api/user", {ID, name, email})
+          const response = await axios.post("/api/user/register", {ID, name, email, avatar})
 
           console.log("user row created successfully",response.data);
         }
@@ -52,7 +59,7 @@ function setSession() {
         setAuth()
     }, []);
   return (
-    <div>
+    <div className='h-screen flex items-center justify-center'>
       <LoaderOne/>
     </div>
   )

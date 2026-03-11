@@ -14,11 +14,14 @@ import { useAuthStore } from '@/store/Auth';
 import { LoaderOne } from '@/components/ui/loader';
 import { account } from '@/models/client/config';
 import { OAuthProvider } from 'appwrite';
+import { tr } from 'motion/react-client';
+import { toast } from 'react-toastify';
 
 export default function Login() {
   const { login } = useAuthStore();
     const [isLoading, setIsLoading] = React.useState(false);
     const [error, setError] = React.useState("");
+    const [message, setMessage] = React.useState("")
 
     const [email, setEmail] = React.useState("")
     const [password, setPassword] = React.useState("")
@@ -47,49 +50,65 @@ export default function Login() {
         setIsLoading(() => false);
     };
 
+    const hendelForgotPassword = async () => {
+    if (!email) {
+      setError(() => "Please enter your email");
+      return;
+    }
+
+    setError(() => "");
+
+    try {
+      const promise = account.createRecovery({
+      email: email,
+      url: `${process.env.NEXT_PUBLIC_DOMAIN_NAME}/reset-password`
+      }); 
+
+      console.log(promise)
+      setMessage("A password reset link has been sent. Check your email")
+      toast.success("Reset link has been sent")
+    } catch (error) {
+      console.error(error)
+      setError("User doesn't exits with this email")
+    }
+  }
+
     const continueWithGoogle = ()=>{
     account.createOAuth2Session(
       OAuthProvider.Google,
-      'http://localhost:3000/session',
-      'http://localhost:3000/login'
+      `${process.env.NEXT_PUBLIC_DOMAIN_NAME}/session`,
+      `${process.env.NEXT_PUBLIC_DOMAIN_NAME}/login`
     )
   }
 
   return (
-    <>
-    {isLoading && (<div className='flex justify-center mb-5'><LoaderOne/></div>)}
-    <div className="border border-gray-600 shadow-input mx-auto w-full max-w-md rounded-none bg-white p-4 md:rounded-2xl md:p-8 dark:bg-black">
+    <div className='flex justify-center items-center h-screen p-2'>
+    <div className='flex flex-col gap-4 p-2 w-100 border rounded-xl shadow-2xl bg-card'>
       <h1 className="flex justify-center text-xl font-bold text-neutral-800 dark:text-neutral-200">
         Log in
-      </h1>
-      <p className="mt-2 max-w-sm text-sm text-neutral-600 dark:text-neutral-300">
-        If you don&apos;t have an account, then please{" "}
-                <Link href="/register" className="text-orange-500 underline">
-                    register
-                </Link>{""} to our site
-      </p>
-
-      {error && (
-                <p className="mt-8 text-center text-sm text-red-500 dark:text-red-400">{error}</p>
-            )}
+      </h1>    
  
-      <form className="my-8" onSubmit={handleSubmit}>        
+      <form className="my-2" onSubmit={handleSubmit}>        
         <LabelInputContainer className="mb-4">
-          <Label htmlFor="email">Email Address</Label>
+          <Label htmlFor="email">Email</Label>
           <Input id="email" placeholder="Enter your email" type="email" onChange={(e: any)=>{setEmail(e.target.value)}} />
         </LabelInputContainer>
         <LabelInputContainer className="mb-4">
-          <Label htmlFor="password">Password</Label>
+          <div className='flex justify-between'>
+            <Label htmlFor="password">Password</Label>
+            <p onClick={hendelForgotPassword} className='text-sm font-semibold underline active:scale-97 cursor-pointer'>Forgot Password ?</p>
+          </div>
           <Input id="password" placeholder="••••••••" type="password" onChange={(e: any)=>{setPassword(e.target.value)}} />
         </LabelInputContainer>
         
  
         <button
-          className="group/btn relative block h-10 w-full rounded-md bg-linear-to-br from-black to-neutral-600 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:bg-zinc-800 dark:from-zinc-900 dark:to-zinc-900 dark:shadow-[0px_1px_0px_0px_#27272a_inset,0px_-1px_0px_0px_#27272a_inset]"
+          className="group/btn relative block h-10 w-full cursor-pointer active:scale-95 items-center justify-center rounded-md bg-linear-to-br from-black to-neutral-600 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:bg-zinc-800 dark:from-zinc-900 dark:to-zinc-900 dark:shadow-[0px_1px_0px_0px_#27272a_inset,0px_-1px_0px_0px_#27272a_inset]"
           type="submit"
           disabled={isLoading}
         >
-          Log in &rarr;
+          {!isLoading ? <p className='font-semibold'>Log in &rarr;</p> : <div className='pb-1 flex justify-center items-center'><LoaderOne /></div>}
+          
           <BottomGradient />
         </button>
  
@@ -98,7 +117,7 @@ export default function Login() {
         <div className="flex flex-col space-y-4">
           
           <button
-            className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black dark:bg-zinc-900 dark:shadow-[0px_0px_1px_1px_#262626]"
+            className="group/btn shadow-input relative flex h-10 w-full cursor-pointer active:scale-95 items-center justify-center space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black dark:bg-zinc-900 dark:shadow-[0px_0px_1px_1px_#262626]"
             type="button"
             disabled={isLoading}
             onClick={continueWithGoogle}
@@ -112,8 +131,24 @@ export default function Login() {
           
         </div>
       </form>
+
+      {error && (
+                <p className=" text-center text-sm text-red-500 dark:text-red-400">{error}</p>
+            )}
+
+      {message && (
+          <p className="text-center text-sm text-green-500 dark:text-green-400">{message}</p>
+        )}      
+
+      <p className=" max-w-sm text-sm text-neutral-600 dark:text-neutral-300">
+        If you don&apos;t have an account, then please{" "}
+                <Link href="/register" className="text-orange-500 underline">
+                    register
+                </Link>{""} to our site
+      </p>
+
     </div>
-    </>
+    </div>
   );
 }
  
