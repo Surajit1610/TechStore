@@ -1,4 +1,4 @@
-import { db, onlineOrderTable, customerTable, itemTable } from "@/models/name";
+import { db, onlineOrderTable, customerTable, itemTable, productTable } from "@/models/name";
 import { tablesDB } from "@/models/server/config";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -16,11 +16,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Fetch items
+    // Fetch items and their product images
     const items = await Promise.all(
-      (order.itemId || []).map((id: string) =>
-        tablesDB.getRow(db, itemTable, id).catch(() => null)
-      )
+      (order.itemId || []).map(async (id: string) => {
+        const item = await tablesDB.getRow(db, itemTable, id).catch(() => null);
+        if (item && item.productId) {
+          const product = await tablesDB.getRow(db, productTable, item.productId).catch(() => null);
+          if (product && product.images && product.images.length > 0) {
+            item.imageUrl = product.images[0];
+          }
+        }
+        return item;
+      })
     );
 
     // Fetch customer

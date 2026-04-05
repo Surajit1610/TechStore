@@ -3,7 +3,7 @@
 import React, { use, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/Auth'
-import { IconUser, IconWallet, IconLogout, IconMapPin, IconPhone, IconMail, IconEdit, IconShoppingBag, IconHeart, IconShare, IconAddressBook, IconCircleCheck, IconCircleX, IconPlus, IconTrash } from '@tabler/icons-react'
+import { IconUser, IconWallet, IconLogout, IconMapPin, IconPhone, IconMail, IconEdit, IconShoppingBag, IconHeart, IconShare, IconAddressBook, IconCircleCheck, IconCircleX, IconPlus, IconTrash, IconLoader2 } from '@tabler/icons-react'
 import { toast } from 'react-toastify'
 import { useDataStore } from '@/store/Data'
 import Image from 'next/image';
@@ -18,6 +18,9 @@ export default function ProfilePage() {
   const [editingAddress, setEditingAddress] = useState(false)
   const [addresses, setAddresses] = useState<any[]>([])
   const [selectedAddress, setSelectedAddress] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isPageLoading, setIsPageLoading] = useState(true)
+
   const [addressForm, setAddressForm] = useState({
     location: '',
     city: '',
@@ -29,6 +32,8 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user && userData) {
       fetchAddresses();
+    } else {
+      setIsPageLoading(false);
     }
   }, [user, userData])
 
@@ -41,15 +46,31 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsPageLoading(false);
     }
+  }
+
+  if (isPageLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <IconLoader2 className="animate-spin text-green-600 size-10" />
+      </div>
+    )
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen">
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-          <p className="text-lg font-semibold mb-4">Please log in to view your profile</p>
-          <button onClick={() => router.push('/login')} className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Login</button>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50/50 dark:bg-gray-900/50">
+        <main className="max-w-md w-full mx-auto p-8 text-center bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700">
+          <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-6">
+            <IconUser size={40} />
+          </div>
+          <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">Access Denied</h2>
+          <p className="text-gray-500 dark:text-gray-400 mb-8">Please log in to view and manage your profile</p>
+          <button onClick={() => router.push('/login')} className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-colors shadow-md shadow-green-600/20 active:scale-[0.98]">
+            Sign In to Continue
+          </button>
         </main>
       </div>
     )
@@ -66,11 +87,9 @@ export default function ProfilePage() {
       const promise = account.createVerification({
         url: `${process.env.NEXT_PUBLIC_DOMAIN_NAME}/verifyEmail`
       });
-      console.log(`${process.env.NEXT_PUBLIC_DOMAIN_NAME}/verifyEmail`)
-      console.log(promise)
       toast.promise(promise, {
         pending: 'Sending verification email...',
-        success: 'Verification email sent successfully',
+        success: 'Verification email sent successfully! Please check your inbox.',
         error: 'Failed to send verification email'
       });
     } catch (error) {
@@ -79,6 +98,7 @@ export default function ProfilePage() {
   }
 
   const handleAddressSave = async () => {
+    setIsLoading(true);
     if (selectedAddress) {
       // Update address
       try {
@@ -94,7 +114,7 @@ export default function ProfilePage() {
         });
         const data = await response.json();
         if (response.ok) {
-          fetchAddresses();
+          await fetchAddresses();
           setEditingAddress(false);
           setSelectedAddress(null)
           toast.success('Address updated successfully');
@@ -103,6 +123,8 @@ export default function ProfilePage() {
         }
       } catch (error) {
         toast.error('An error occurred while updating the address');
+      } finally {
+        setIsLoading(false);
       }
     } else {
       // Add new address
@@ -119,7 +141,7 @@ export default function ProfilePage() {
         });
         const data = await response.json();
         if (response.ok) {
-          fetchAddresses();
+          await fetchAddresses();
           setEditingAddress(false);
           toast.success('Address added successfully');
         } else {
@@ -127,6 +149,8 @@ export default function ProfilePage() {
         }
       } catch (error) {
         toast.error('An error occurred while adding the address');
+      } finally {
+        setIsLoading(false);
       }
     }
   }
@@ -181,132 +205,306 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen">
-      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-4 lg:py-8 ">
+    <div className="min-h-screen bg-gray-50/30 dark:bg-gray-900/20">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Header */}
-        <div className="flex items-center justify-between md:mb-8 sm:mb-6 mb-4">
-          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3"><IconUser /> My Profile</h1>
-          <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 border rounded-md text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 cursor-pointer active:scale-97"><IconLogout size={18} /> Logout</button>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight flex items-center gap-3">
+              My Profile
+            </h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage your account settings and preferences</p>
+          </div>
+          <button 
+            onClick={handleLogout} 
+            className="hidden sm:inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border border-red-200 dark:border-red-900/50 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium transition-all shadow-sm active:scale-95"
+          >
+            <IconLogout size={18} /> 
+            <span>Sign Out</span>
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-6 md:gap-4 gap-2">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left: User Info Card */}
-          <div className="lg:col-span-1">
-            <div className="bg-card rounded-lg md:p-6 sm:p-4 p-2 shadow-sm border">
-              <div className="flex flex-col items-center text-center mb-6">
-                <div className="w-24 h-24 bg-linear-to-br overflow-hidden relative rounded-full  mb-4">
+          <div className="lg:col-span-4 space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-700/60">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-28 h-28 bg-gray-100 dark:bg-gray-700 overflow-hidden relative rounded-full mb-5 ring-4 ring-white dark:ring-gray-800 shadow-md">
                   {userData?.avatar ? (
                     <Image
                       src={userData.avatar}
                       alt="avatar"
                       fill
                       className="object-cover"
+                      sizes="(max-width: 112px) 100vw, 112px"
                     />
                   ) : (
                     <Image
                       src="/user.png"
                       alt="avatar"
                       fill
-                      className="object-cover"
+                      className="object-cover p-4"
+                      sizes="(max-width: 112px) 100vw, 112px"
                     />
                   )}
                 </div>
-                <h2 className="text-lg font-bold">{user?.name || 'User'}</h2>
-                <p className="text-sm text-gray-500">{user?.email}</p>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{user?.name || 'User'}</h2>
+                <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 px-3 py-1 rounded-full text-sm mb-6">
+                  <IconMail size={14} />
+                  <span className="truncate max-w-50">{user?.email}</span>
+                </div>
               </div>
 
-             
+              <div className="h-px bg-gray-100 dark:bg-gray-700/60 w-full mb-6"></div>
 
               {/* Quick Links */}
-                <div className="space-y-2">
-                  <button onClick={() => router.push('/user/cart')} className="w-full flex items-center gap-3 p-3 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition"><IconShoppingBag size={18} /><span>My Cart</span></button>
-                  <button onClick={() => router.push('/user/liked')} className="w-full flex items-center gap-3 p-3 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition"><IconHeart size={18} /><span>Liked Items</span></button>
-                </div>
+              <div className="space-y-2.5">
+                <button 
+                  onClick={() => router.push('/user/cart')} 
+                  className="w-full flex items-center justify-between p-3.5 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-green-600 dark:hover:text-green-400 transition-colors group border border-transparent hover:border-gray-100 dark:hover:border-gray-600"
+                >
+                  <div className="flex items-center gap-3 font-medium">
+                    <div className="p-2 bg-gray-100 dark:bg-gray-900 rounded-lg group-hover:bg-green-100 dark:group-hover:bg-green-900/30 transition-colors">
+                      <IconShoppingBag size={18} className="text-gray-500 dark:text-gray-400 group-hover:text-green-600 dark:group-hover:text-green-400" />
+                    </div>
+                    <span>My Cart</span>
+                  </div>
+                </button>
+                <button 
+                  onClick={() => router.push('/user/liked')} 
+                  className="w-full flex items-center justify-between p-3.5 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-rose-600 dark:hover:text-rose-400 transition-colors group border border-transparent hover:border-gray-100 dark:hover:border-gray-600"
+                >
+                  <div className="flex items-center gap-3 font-medium">
+                    <div className="p-2 bg-gray-100 dark:bg-gray-900 rounded-lg group-hover:bg-rose-100 dark:group-hover:bg-rose-900/30 transition-colors">
+                      <IconHeart size={18} className="text-gray-500 dark:text-gray-400 group-hover:text-rose-600 dark:group-hover:text-rose-400" />
+                    </div>
+                    <span>Liked Items</span>
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Right: Details Section */}
-          <div className="lg:col-span-2 lg:space-y-6 md:space-y-4 space-y-2">
+          <div className="lg:col-span-8 space-y-6">
+            
             {/* Contact Info */}
-            <div className="bg-card rounded-lg md:p-6 sm:p-4 p-2 shadow-sm border">
-              <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><IconAddressBook /> Contact Information</h3>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-500 flex items-center gap-2"><IconMail className='size-5' /> Email</p>
-                  <div className='flex items-center gap-2'>
-                    <p className="font-semibold">{user?.email}</p>
-                    {user.emailVerification
-                      ? <p className="text-sm text-green-600"><IconCircleCheck className='size-5' /> </p>
-                      : <p onClick={hendelVerifyEmail} className="flex text-sm text-white bg-green-700 active:bg-green-800 rounded-md py-1 px-2 cursor-pointer active:scale-95">Verify</p>
-                    }
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-700/60">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+                <IconAddressBook className="text-blue-500" /> Account Details
+              </h3>
+              
+              <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700/50">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Email Address</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{user?.email}</p>
                   </div>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 flex items-center gap-2"><IconPhone className='size-5' /> Phone</p>
-                  <p className="font-semibold flex items-center gap-2 ">{userData?.phone || 'Not Provided'}</p>
+                  <div>
+                    {user.emailVerification ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm font-medium border border-green-200 dark:border-green-800/30">
+                        <IconCircleCheck size={16} />
+                        Verified
+                      </span>
+                    ) : (
+                      <button 
+                        onClick={hendelVerifyEmail} 
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm active:scale-95"
+                      >
+                        <IconMail size={16} />
+                        Verify Email
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Delivery Address */}
-              <div className="bg-card rounded-lg md:p-6 sm:p-4 p-2 shadow-sm border">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold flex items-center gap-2"><IconMapPin /> Delivery Address</h3>
-                  <button onClick={handleAddNewAddress} className="flex items-center gap-1 text-green-600 hover:underline"><IconPlus size={16} /> Add Address</button>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-700/60">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <IconMapPin className="text-green-500" /> Delivery Addresses
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">Manage where your orders are delivered</p>
                 </div>
-
-                {editingAddress ? (
-                  <div className="space-y-3">
-                    <input type="text" value={addressForm.location} onChange={(e) => setAddressForm({ ...addressForm, location: e.target.value })} placeholder="Location" className="w-full px-3 py-2 border rounded-md" />
-                    <div className="grid grid-cols-2 gap-3">
-                      <input type="text" value={addressForm.city} onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })} placeholder="City" className="px-3 py-2 border rounded-md" />
-                      <input type="text" value={addressForm.state} onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })} placeholder="State" className="px-3 py-2 border rounded-md " />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <input type="text" value={addressForm.pincode} onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value })} placeholder="Pincode" className="px-3 py-2 border rounded-md " />
-                      <input type="tel" value={addressForm.phone} onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })} placeholder="Phone" className="px-3 py-2 border rounded-md" />
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={handleAddressSave} className="flex-1 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Save</button>
-                      <button onClick={() => {setEditingAddress(false) ; setSelectedAddress(null)}} className="flex-1 px-3 py-2 border rounded-md hover:bg-gray-100">Cancel</button>
-                    </div>
-                  </div>
-                ) : (
-                  addresses.length > 0 ? (
-                    <div className="space-y-4">
-                      {addresses.map((address) => (
-                        <div key={address.$id} className="border-b pb-4">
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-2 text-sm">
-                              <p>{address.location}</p>
-                              <p>{address.city}, {address.state} {address.pincode}</p>
-                              <p className="flex items-center gap-2"><IconPhone size={14} /> {address.phone}</p>
-                            </div>
-                            <div className='flex sm:flex-row flex-col gap-2'>
-                                <button onClick={() => handleEditAddress(address)} className="flex items-center gap-2 text-green-600 hover:underline"><IconEdit size={16} /> Edit</button>
-                                <button onClick={() => handleDeleteAddress(address.$id)} className="flex items-center gap-2 text-red-600 hover:underline"><IconTrash size={16} /> Delete</button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p>No address found. Please add a new address.</p>
-                  )
+                {!editingAddress && (
+                  <button 
+                    onClick={handleAddNewAddress} 
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 text-sm font-medium rounded-lg transition-colors border border-green-200 dark:border-green-800/30"
+                  >
+                    <IconPlus size={16} /> Add New
+                  </button>
                 )}
               </div>
 
+              {editingAddress ? (
+                <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
+                    {selectedAddress ? 'Edit Address' : 'Add New Address'}
+                  </h4>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Street Address</label>
+                      <input 
+                        type="text" 
+                        value={addressForm.location} 
+                        onChange={(e) => setAddressForm({ ...addressForm, location: e.target.value })} 
+                        placeholder="House No. 12, ABC Society, MG Road" 
+                        className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all text-gray-900 dark:text-gray-100" 
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">City</label>
+                        <input 
+                          type="text" 
+                          value={addressForm.city} 
+                          onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })} 
+                          placeholder="City" 
+                          className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all text-gray-900 dark:text-gray-100" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">State</label>
+                        <input 
+                          type="text" 
+                          value={addressForm.state} 
+                          onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })} 
+                          placeholder="State" 
+                          className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all text-gray-900 dark:text-gray-100" 
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">PIN Code</label>
+                        <input 
+                          type="text" 
+                          value={addressForm.pincode} 
+                          onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value })} 
+                          placeholder="e.g. 100001" 
+                          className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all text-gray-900 dark:text-gray-100" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number</label>
+                        <input 
+                          type="tel" 
+                          value={addressForm.phone} 
+                          onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })} 
+                          placeholder="Phone Number" 
+                          className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all text-gray-900 dark:text-gray-100" 
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">
+                      <button 
+                        onClick={handleAddressSave} 
+                        disabled={isLoading}
+                        className="px-6 py-2.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {isLoading && <IconLoader2 size={18} className="animate-spin" />}
+                        {isLoading ? 'Saving...' : 'Save Address'}
+                      </button>
+                      <button 
+                        onClick={() => {setEditingAddress(false); setSelectedAddress(null);}} 
+                        disabled={isLoading}
+                        className="px-6 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-70"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                addresses.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {addresses.map((address) => (
+                      <div key={address.$id} className="relative group bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:border-green-500/50 dark:hover:border-green-500/50 transition-colors shadow-sm">
+                        <div className="absolute top-4 right-4 flex opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity gap-2">
+                          <button 
+                            onClick={() => handleEditAddress(address)} 
+                            className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                            title="Edit"
+                          >
+                            <IconEdit size={16} />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteAddress(address.$id)} 
+                            className="p-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-md hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+                            title="Delete"
+                          >
+                            <IconTrash size={16} />
+                          </button>
+                        </div>
+                        
+                        <div className="pr-16 space-y-2.5">
+                          <p className="font-medium text-gray-900 dark:text-gray-100 leading-snug">{address.location}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {address.city}, {address.state} <span className="font-medium text-gray-700 dark:text-gray-300">{address.pincode}</span>
+                          </p>
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-md text-xs font-medium text-gray-700 dark:text-gray-300 mt-2">
+                            <IconPhone size={14} className="text-gray-500" /> 
+                            {address.phone}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-10 px-4 bg-gray-50 dark:bg-gray-900/30 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl">
+                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <IconMapPin className="text-gray-400 size-8" />
+                    </div>
+                    <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No addresses saved</h4>
+                    <p className="text-gray-500 max-w-sm mx-auto mb-6">You haven't added any delivery addresses yet. Add one now to make checkout faster.</p>
+                    <button 
+                      onClick={handleAddNewAddress} 
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      <IconPlus size={18} /> Add Your First Address
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
+
             {/* Orders History */}
-              <div className="bg-card rounded-lg md:p-6 sm:p-4 p-2 shadow-sm border">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><IconShoppingBag /> Recent Orders</h3>
-                <div className="flex sm:flex-row flex-col gap-4 justify-around  text-center py-8">
-                  <button onClick={() => router.push("/customer/ofline-order-history")} className='p-3 rounded-md bg-green-700 font-semibold text-white cursor-pointer active:bg-green-800 active:scale-97'>Check Offline Order History</button>
-                  <button onClick={() => router.push("/user/order-history")} className='p-3 rounded-md bg-green-700 font-semibold text-white cursor-pointer active:bg-green-800 active:scale-97'>Check Online Order History</button>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-700/60 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 dark:bg-purple-500/5 rounded-bl-full z-0"></div>
+              
+              <div className="relative z-10">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <IconShoppingBag className="text-purple-500" /> Orders History
+                </h3>
+                <p className="text-sm text-gray-500 mb-6">View and track all your recent purchases</p>
+                
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <button 
+                    onClick={() => router.push("/user/order-history")} 
+                    className="flex-1 inline-flex justify-center items-center gap-2 py-3 px-6 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-xl transition-all shadow-md shadow-purple-600/20 active:scale-95 group"
+                  >
+                    <IconShoppingBag size={20} className="group-hover:animate-bounce" />
+                    View All Orders
+                  </button>
                 </div>
               </div>
-
+            </div>
 
           </div>
+        </div>
+
+        {/* Mobile Sign Out Button */}
+        <div className="mt-8 sm:hidden">
+          <button 
+            onClick={handleLogout} 
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 border border-red-200 dark:border-red-900/50 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium transition-all shadow-sm active:scale-95"
+          >
+            <IconLogout size={20} /> 
+            <span className="text-lg">Sign Out</span>
+          </button>
         </div>
       </main>
     </div>

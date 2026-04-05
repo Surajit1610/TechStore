@@ -20,6 +20,7 @@ function products() {
   const [activeSubcategory, setActiveSubcategory] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState("")
   const [addingCategory, setAddingCategory] = useState(false)
+  const [editingCategory, setEditingCategory] = useState<string | null>(null)
   const [categoryName, setCategoryName] = useState("")
   const [categoryImage, setCategoryImage] = useState("")
   const [selectedCategoryFile, setSelectedCategoryFile] = useState<File | null>(null)
@@ -27,6 +28,7 @@ function products() {
   const [categoryCurrentPage, setCategoryCurrentPage] = useState(1)
   const categoryPageSize = 5
   const [addingSubcategory, setAddingSubcategory] = useState(false)
+  const [editingSubcategory, setEditingSubcategory] = useState<string | null>(null)
   const [subcategoryName, setSubcategoryName] = useState("")
   const [subcategoryImage, setSubcategoryImage] = useState("")
   const [selectedSubcategoryFile, setSelectedSubcategoryFile] = useState<File | null>(null)
@@ -55,6 +57,7 @@ function products() {
     setCategoryImage("")
     setSelectedCategoryFile(null)
     setAddingCategory(false)
+    setEditingCategory(null)
   }
 
   // Filter and paginate subcategories
@@ -77,6 +80,7 @@ function products() {
     setSubcategoryImage("")
     setSelectedSubcategoryFile(null)
     setAddingSubcategory(false)
+    setEditingSubcategory(null)
   }
 
   type Product = {
@@ -316,7 +320,7 @@ function products() {
 
   const addCategory = async () => {
 
-    if (!selectedCategoryFile) {
+    if (!editingCategory && !selectedCategoryFile) {
       alert('Please select an image to upload.');
       return;
     }else if (!categoryName) {
@@ -324,29 +328,77 @@ function products() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('image', selectedCategoryFile); // 'image' is the field name on the server
-    formData.append('categoryName', categoryName);
+    let uploadedImageUrl = categoryImage;
+
+    if (selectedCategoryFile) {
+      const uploadData = new FormData();
+      uploadData.append('file', selectedCategoryFile);
+      try {
+        const uploadRes = await axios.post("/api/company/product/uplode_file", uploadData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+        uploadedImageUrl = uploadRes.data.res.url;
+      } catch (error) {
+        console.error('Failed to upload image', error);
+        toast.error('Failed to upload image');
+        return;
+      }
+    }
+
+    const payload = {
+      categoryId: editingCategory,
+      categoryName,
+      categoryImage: uploadedImageUrl
+    };
 
     try {
-      const response = await axios.post('/api/company/product/category/addCategory', formData);
-      if (response.status === 200) {
-        console.log('Category added successfully!');
-        console.log(response.data);
-        // Handle success, e.g., clear form, show success message
+      if (editingCategory) {
+        const response = await axios.post('/api/company/product/category/update-category', payload);
+        if (response.status === 200) {
+          toast.success('Category updated successfully!');
+        } else {
+          toast.error('Error updating category.');
+        }
       } else {
-        console.error('Error adding category.');
-        // Handle error
+        const response = await axios.post('/api/company/product/category/addCategory', payload);
+        if (response.status === 200) {
+          toast.success('Category added successfully!');
+        } else {
+          toast.error('Error adding category.');
+        }
       }
     } catch (error) {
       console.error('Network error:', error);
+      toast.error('Network error');
     }
     resetCategoryForm()
     return categorys()
   };
 
   // delete Category
-  const deleteCategory = async (id: string, subcategory: string[]) => {
+  const deleteCategory = async (id: string, subcategory: string[], catImage?: string) => {
+    if (catImage) {
+      try {
+        const parts = catImage.split('/upload/');
+        let public_id = null;
+        if (parts.length > 1) {
+          let path = parts[1];
+          if (path.match(/^v\d+\//)) path = path.substring(path.indexOf('/') + 1);
+          const lastDotIndex = path.lastIndexOf('.');
+          if (lastDotIndex !== -1) path = path.substring(0, lastDotIndex);
+          public_id = path;
+        }
+
+        if (public_id) {
+          const formData = new FormData();
+          formData.append("public_id", public_id);
+          await axios.post("/api/company/product/delete-file", formData).catch(err => console.error("Cloudinary delete failed", err));
+        }
+      } catch (error) {
+         console.error('Failed to delete image from cloudinary', error);
+      }
+    }
+
     const response = await axios.post("/api/company/product/category/delete-category", {id, subcategory});
     if (response.data.error) {
       console.log(response.data.error);
@@ -362,7 +414,7 @@ function products() {
   // Add Subcategory
   const addSubcategory = async () => {
 
-    if (!selectedSubcategoryFile) {
+    if (!editingSubcategory && !selectedSubcategoryFile) {
       alert('Please select an image to upload.');
       return;
     }else if (!subcategoryName) {
@@ -370,24 +422,49 @@ function products() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('image', selectedSubcategoryFile); // 'image' is the field name on the server
-    formData.append('subcategoryName', subcategoryName);
-    formData.append('categoryId', selectedCategory);
+    let uploadedImageUrl = subcategoryImage;
+
+    if (selectedSubcategoryFile) {
+      const uploadData = new FormData();
+      uploadData.append('file', selectedSubcategoryFile);
+      try {
+        const uploadRes = await axios.post("/api/company/product/uplode_file", uploadData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+        uploadedImageUrl = uploadRes.data.res.url;
+      } catch (error) {
+        console.error('Failed to upload image', error);
+        toast.error('Failed to upload image');
+        return;
+      }
+    }
+
+    const payload = {
+      subcategoryId: editingSubcategory,
+      categoryId: selectedCategory,
+      subcategoryName,
+      subcategoryImage: uploadedImageUrl
+    };
 
     try {
-      const response = await axios.post('/api/company/product/category/addSubcategory', formData);
-      if (response.status === 200) {
-        console.log('Subcategory added successfully!');
-        console.log(response.data);
-        // subcategorys(response.data.subcategory, response.data.categoryId)
-        // Handle success, e.g., clear form, show success message
+      if (editingSubcategory) {
+        const response = await axios.post('/api/company/product/category/update-subcategory', payload);
+        if (response.status === 200) {
+          toast.success('Subcategory updated successfully!');
+        } else {
+          toast.error('Error updating subcategory.');
+        }
       } else {
-        console.error('Error adding subcategory.');
-        // Handle error
+        const response = await axios.post('/api/company/product/category/addSubcategory', payload);
+        if (response.status === 200) {
+          toast.success('Subcategory added successfully!');
+        } else {
+          toast.error('Error adding subcategory.');
+        }
       }
     } catch (error) {
       console.error('Network error:', error);
+      toast.error('Network error');
     }
     setAddingSubcategory(false);
     setActiveSubcategory(false)
@@ -396,7 +473,29 @@ function products() {
   } 
 
   // delete Subcategory
-  const deleteSubcategory = async (id: string) => {
+  const deleteSubcategory = async (id: string, subCatImage?: string) => {
+    if (subCatImage) {
+      try {
+        const parts = subCatImage.split('/upload/');
+        let public_id = null;
+        if (parts.length > 1) {
+          let path = parts[1];
+          if (path.match(/^v\d+\//)) path = path.substring(path.indexOf('/') + 1);
+          const lastDotIndex = path.lastIndexOf('.');
+          if (lastDotIndex !== -1) path = path.substring(0, lastDotIndex);
+          public_id = path;
+        }
+
+        if (public_id) {
+          const formData = new FormData();
+          formData.append("public_id", public_id);
+          await axios.post("/api/company/product/delete-file", formData).catch(err => console.error("Cloudinary delete failed", err));
+        }
+      } catch (error) {
+         console.error('Failed to delete image from cloudinary', error);
+      }
+    }
+
     try {
       const response = await axios.post(`/api/company/product/category/detete-subcategory`, { subcategoryId: id, categoryId: selectedCategory });
       console.log(response.data);
@@ -669,7 +768,7 @@ function products() {
                       <div className='flex justify-center items-center text-xs'>{category}</div>
                       <div className='flex justify-center items-center text-xs'>{subcategory}</div>
                     </div>
-                    <div className='flex justify-center items-center text-green-600 font-bold'>₹{price}</div>
+                    <div className='flex justify-center items-center text-green-600 font-bold'>₹{finalPrice}</div>
                   </div>
                   <div className='flex justify-between items-center'>
                     <div className='flex justify-center items-center gap-2'>Qty: {stock} <IconEdit onClick={ () => handleStock($id)} className='cursor-pointer hover:text-green-600'/></div>
@@ -736,7 +835,7 @@ function products() {
         
                                   <h2 className='dark:text-green-700 text-green-800 font-bold text-lg'>Categories</h2>
         
-                                  {!addingCategory && (
+                                  {!addingCategory && !editingCategory && (
         
                                     <button onClick={() => setAddingCategory(true)} className='flex justify-center items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 active:scale-95'>
         
@@ -770,11 +869,11 @@ function products() {
         
                                 {/* Add/Edit Category Form */}
         
-                                {(addingCategory) && (
+                                {(addingCategory || editingCategory) && (
         
                                   <div className='flex flex-col gap-2 p-3 rounded-lg dark:bg-emerald-950/30 bg-slate-200 border'>
         
-                                    <h3 className='font-semibold'>Add New Category</h3>
+                                    <h3 className='font-semibold'>{editingCategory ? "Edit Category" : "Add New Category"}</h3>
         
                                     <input 
         
@@ -824,7 +923,7 @@ function products() {
         
                                       >
         
-                                        Add <IconPlus size={18}/>
+                                        {editingCategory ? "Update" : "Add"} <IconPlus size={18}/>
         
                                       </button>
         
@@ -892,9 +991,31 @@ function products() {
         
                                               onClick={() => {
         
+                                                setCategoryName(categoryName)
+                                                if (categoryImage) setCategoryImage(categoryImage);
+                                                setEditingCategory($id)
+        
+                                                setAddingCategory(false)
+        
+                                              }}
+        
+                                              className='p-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md active:scale-95'
+        
+                                              title='Edit'
+        
+                                            >
+        
+                                              <IconEdit size={16} />
+        
+                                            </button>
+        
+                                            <button
+        
+                                              onClick={() => {
+        
                                                 if (confirm(`Delete category "${categoryName}"?`)) {
         
-                                                  deleteCategory($id, subcategory)
+                                                  deleteCategory($id, subcategory, categoryImage)
         
                                                   console.log('Delete category:', $id)
         
@@ -980,7 +1101,7 @@ function products() {
         
                                 <h2 className='dark:text-green-700 text-green-800 font-bold text-lg'>Subcategories</h2>
         
-                                {!addingSubcategory && (
+                                {!addingSubcategory && !editingSubcategory && (
         
                                   <button onClick={() => setAddingSubcategory(true)} className='flex justify-center items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 active:scale-95'>
         
@@ -1014,11 +1135,11 @@ function products() {
         
                               {/* Add/Edit Subcategory Form */}
         
-                              {(addingSubcategory) && (
+                              {(addingSubcategory || editingSubcategory) && (
         
                                 <div className='flex flex-col gap-2 p-3 rounded-lg dark:bg-emerald-950/30 bg-slate-200 border'>
         
-                                  <h3 className='font-semibold'>Add New Subcategory</h3>
+                                  <h3 className='font-semibold'>{editingSubcategory ? "Edit Subcategory" : "Add New Subcategory"}</h3>
         
                                   <input 
         
@@ -1068,7 +1189,7 @@ function products() {
         
                                     >
         
-                                      Add <IconPlus size={18}/>
+                                      {editingSubcategory ? "Update" : "Add"} <IconPlus size={18}/>
         
                                     </button>
         
@@ -1130,9 +1251,31 @@ function products() {
         
                                             onClick={() => {
         
+                                              setSubcategoryName(subcategoryName)
+                                              if (subcategoryImage) setSubcategoryImage(subcategoryImage);
+                                              setEditingSubcategory($id)
+        
+                                              setAddingSubcategory(false)
+        
+                                            }}
+        
+                                            className='p-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md active:scale-95'
+        
+                                            title='Edit'
+        
+                                          >
+        
+                                            <IconEdit size={16} />
+        
+                                          </button>
+        
+                                          <button
+        
+                                            onClick={() => {
+        
                                               if (confirm(`Delete subcategory "${subcategoryName}"?`)) {
         
-                                                deleteSubcategory($id);
+                                                deleteSubcategory($id, subcategoryImage);
         
                                                 console.log('Delete subcategory:', $id)
         

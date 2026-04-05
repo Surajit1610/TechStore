@@ -1,17 +1,18 @@
 import { NextResponse, NextRequest } from "next/server";
-import { ID } from "node-appwrite";
 import { tablesDB } from "@/models/server/config";
 import { db, categoryTable } from "@/models/name";
 
 export async function POST(request: NextRequest) {
     try {
-        const { categoryName, categoryImage } = await request.json();
+        const { categoryId, categoryName, categoryImage } = await request.json();
 
-        const category = await tablesDB.createRow(db, categoryTable, ID.unique(), {
-            categoryName: categoryName,
-            categoryImage: categoryImage,
-            subcategory: [],
-        });
+        const updateData: any = { categoryName };
+
+        if (categoryImage) {
+            updateData.categoryImage = categoryImage;
+        }
+
+        const category = await tablesDB.updateRow(db, categoryTable, categoryId, updateData);
 
         return NextResponse.json({ category });
     } catch (error) {

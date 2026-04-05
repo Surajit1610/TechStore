@@ -51,41 +51,45 @@ function Navbar() {
     <div
      className='bg-card/60 backdrop-blur-xl flex justify-between items-center gap-2 px-2 sm:px-4 py-2 border-b sticky top-0 z-50'
     >
-      {isSidebarOpen && (
-        <ClickAwayListener onClickAway={() => setIsSidebarOpen(false)}>
-          <div className={`absolute top-0 left-0 h-screen w-60 border-r-2 rounded-r-2xl bg-card shadow-lg p-4 z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-            <div className='flex items-center justify-between border-b pb-3'>            
+      {/* Sidebar Overlay */}
+      <div 
+        className={`fixed inset-0 bg-black/50 backdrop-blur-md z-40 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+        onClick={() => setIsSidebarOpen(false)}
+      />
+
+      {/* Sidebar */}
+      <ClickAwayListener onClickAway={() => isSidebarOpen && setIsSidebarOpen(false)}>
+        <div className={`fixed top-0 left-0 h-screen w-64 bg-card shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className='flex flex-col h-full'>
+            <div className='flex items-center justify-between p-4 border-b border-border/50'>            
               <div className='flex items-center gap-2'>
-                {/* <div
-                 onClick={() => router.push("/")}
-                 className="flex w-9 h-9 rounded-full overflow-hidden relative cursor-pointer">
-                  <Image
-                  src="/save-more.jpg"
-                  alt="avatar"
-                  fill
-                  className="object-cover" />
-                </div> */}
-                <p className='text-2xl font-bold text-green-600'>TechShop</p>
+                <p className='text-2xl font-bold text-green-600 tracking-tight'>TechShop</p>
               </div>  
-              <div><IconX onClick={() => setIsSidebarOpen(false)} className='cursor-pointer'/></div>
+              <button 
+                onClick={() => setIsSidebarOpen(false)} 
+                className='p-2 rounded-full hover:bg-muted transition-colors active:scale-95'
+              >
+                <IconX size={20} />
+              </button>
             </div>
             
-            <div className='flex flex-col gap-4 font-semibold mt-3'>
-              <Link href="/" onClick={() => setIsSidebarOpen(false)} className={`hover:text-green-500 transition ${pathname === "/" ? "text-green-600" : ""}`}>
+            <div className='flex flex-col gap-2 p-4 font-medium'>
+              <Link href="/" onClick={() => setIsSidebarOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${pathname === "/" ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-500" : "hover:bg-muted hover:translate-x-1"}`}>
+                <IconHome size={20} />
                 Home
               </Link>
-              <Link href="/shop" onClick={() => setIsSidebarOpen(false)} className={`hover:text-green-500 transition ${pathname === "/shop" ? "text-green-600" : ""}`}>
+              <Link href="/shop" onClick={() => setIsSidebarOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${pathname === "/shop" ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-500" : "hover:bg-muted hover:translate-x-1"}`}>
+                <IconBuildingStore size={20} />
                 Shop
               </Link>
-              <Link href="/about" onClick={() => setIsSidebarOpen(false)} className={`hover:text-green-500 transition ${pathname === "/about" ? "text-green-600" : ""}`}>
+              <Link href="/about" onClick={() => setIsSidebarOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${pathname === "/about" ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-500" : "hover:bg-muted hover:translate-x-1"}`}>
+                <IconUser size={20} />
                 About
               </Link>
             </div>
-
-            
           </div>
-        </ClickAwayListener>
-      )}
+        </div>
+      </ClickAwayListener>
       <div className='flex items-center gap-2 sm:gap-4'>
         <div
          onClick={() => router.push("/")}

@@ -14,6 +14,7 @@ type Product = {
   stock: number
   category: string
   subcategory: string
+  images?: string[]
 }
 
 type Leader = {
@@ -63,6 +64,19 @@ function Company() {
   // State for new featured product
   const [newTitle, setNewTitle] = useState('');
   const [newProductIds, setNewProductIds] = useState<string[]>([]);
+  const [productSearch, setProductSearch] = useState('');
+  const [productCategoryFilter, setProductCategoryFilter] = useState('');
+  const [productSubcategoryFilter, setProductSubcategoryFilter] = useState('');
+
+  const uniqueCategories = Array.from(new Set(allProducts.map(p => p.category).filter(Boolean)));
+  const availableSubcategories = Array.from(
+    new Set(
+      allProducts
+        .filter(p => productCategoryFilter ? p.category === productCategoryFilter : true)
+        .map(p => p.subcategory)
+        .filter(Boolean)
+    )
+  );
 
 
 
@@ -95,9 +109,18 @@ function Company() {
   const addSlider = async ()=>{
     if(!sliderFile) return
     const formData = new FormData()
-    formData.append('image', sliderFile)
+    formData.append('file', sliderFile)
     try {
-      const response = await axios.post("/api/company/slider", formData)
+      // Upload to Cloudinary
+      const uploadRes = await axios.post("/api/company/product/uplode_file", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          }
+      });
+      const cloudinaryUrl = uploadRes.data.res.url;
+
+      // Save to database
+      const response = await axios.post("/api/company/slider", { sliderImage: cloudinaryUrl })
       console.log(response.data)
       getSliders()
     } catch (error) {
@@ -105,8 +128,29 @@ function Company() {
     }
   }
 
-  const removeSlider = async (id: string)=>{
+  const removeSlider = async (id: string, sliderImage: string)=>{
     try {
+      // Extract public_id from Cloudinary URL
+      const parts = sliderImage.split('/upload/');
+      let public_id = null;
+      if (parts.length > 1) {
+        let path = parts[1];
+        if (path.match(/^v\d+\//)) {
+          path = path.substring(path.indexOf('/') + 1);
+        }
+        const lastDotIndex = path.lastIndexOf('.');
+        if (lastDotIndex !== -1) {
+          path = path.substring(0, lastDotIndex);
+        }
+        public_id = path;
+      }
+
+      if (public_id) {
+        const formData = new FormData();
+        formData.append("public_id", public_id);
+        await axios.post("/api/company/product/delete-file", formData).catch(err => console.error("Cloudinary delete failed", err));
+      }
+
       const response = await axios.post(`/api/company/slider/delete-slider/`, { id })
       console.log(response.data)
       getSliders()
@@ -211,41 +255,81 @@ function Company() {
 
   return (
     <div className='flex  flex-col justify-center items-center px-2 sm:px-10 md:px-20 lg:px-30'>
+      {/* Slider Controller */}
       <div className='flex flex-col w-full pb-5'>
-        <p className='flex justify-start items-start text-xl font-semibold'>Slider controler</p>
-        {sliders.rows.length>0?
-          <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-2'>
-            {sliders.rows.map(({$id, sliderImage} : { $id: string, sliderImage: string })=>{
-              return (
-              <div key={$id} className='aspect-video relative'>
-                <img src={sliderImage} alt="Slider Image" className='w-full h-full object-cover mb-2 rounded-md' /> 
-                <Button
-                  variant="destructive"
-                  type="button"
-                  size="icon"
-                  className="absolute top-2 right-2 hover:bg-red-500 cursor-pointer"
-                  onClick={() => removeSlider($id)}
-                >
-                  <IconTrash className="w-4 h-4" />
-                </Button>
-              </div>
-              )
-            })}
-          </div>
-          :
-          <p>No sliders yet</p>
-        }
-        {addingSlider?
-          <div className='flex flex-col mt-2'>
-            <input onChange={(e)=>{  if (e.target.files) {setSliderFile(e.target.files[0])}}}  type="file" placeholder='Category Image' className='border bg-card rounded-lg p-2 w-full cursor-pointer' />
-            <div className='flex gap-2 mt-2 justify-around'>
-              <button onClick={()=>{setAddingSlider(false); setSliderFile(null)}} className='w-50 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 active:scale-95 hover:cursor-pointer'>Cancel</button>
-              <button onClick={()=>{addSlider(); setAddingSlider(false); setSliderFile(null)}} disabled={!sliderFile} className='w-50 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:cursor-pointer'>Add Slider</button>
+        <div className='flex flex-col p-4 sm:p-6 border rounded-xl shadow-sm bg-card'>
+          <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6'>
+            <div>
+              <h2 className='text-xl font-bold text-primary'>Slider Controller</h2>
+              <p className='text-sm text-muted-foreground mt-1'>Manage the homepage hero image sliders.</p>
             </div>
+            {!addingSlider && (
+              <Button onClick={() => setAddingSlider(true)} className='mt-4 sm:mt-0 flex items-center gap-2'>
+                <IconPlus className="w-4 h-4" /> Add New Slider
+              </Button>
+            )}
           </div>
-          :
-          <button className='bg-card shadow-lg border rounded-lg p-2 mt-2 hover:cursor-pointer' onClick={() => setAddingSlider(true)}>Add Slider</button>
-        }
+
+          {addingSlider && (
+            <div className='mb-6 p-4 border rounded-lg bg-secondary/10'>
+              <h3 className='text-md font-medium mb-3'>Upload New Slider Image</h3>
+              <div className='flex flex-col sm:flex-row gap-4 items-start sm:items-center'>
+                <input 
+                  onChange={(e)=>{ if (e.target.files) {setSliderFile(e.target.files[0])} }}  
+                  type="file" 
+                  accept="image/*"
+                  className='block w-full text-sm text-muted-foreground
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-md file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-primary file:text-primary-foreground
+                    hover:file:bg-primary/90 cursor-pointer' 
+                />
+                <div className='flex gap-3 w-full sm:w-auto mt-2 sm:mt-0'>
+                  <Button variant="outline" onClick={()=>{setAddingSlider(false); setSliderFile(null)}} className='flex-1 sm:flex-none'>Cancel</Button>
+                  <Button onClick={()=>{addSlider(); setAddingSlider(false); setSliderFile(null)}} disabled={!sliderFile} className='flex-1 sm:flex-none'>
+                    Upload
+                  </Button>
+                </div>
+              </div>
+              {sliderFile && (
+                <p className='text-sm text-muted-foreground mt-2'>Selected file: {sliderFile.name}</p>
+              )}
+            </div>
+          )}
+
+          {sliders?.rows?.length > 0 ? (
+            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6'>
+              {sliders.rows.map(({$id, sliderImage} : { $id: string, sliderImage: string })=>{
+                return (
+                <div key={$id} className='group aspect-video relative rounded-xl overflow-hidden shadow-sm border border-border hover:shadow-md transition-all'>
+                  <img src={sliderImage} alt="Slider" className='w-full h-full object-cover transition-transform group-hover:scale-105 duration-300' /> 
+                  <div className='absolute inset-0 bg-transparent sm:bg-black/50 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-start justify-end sm:items-center sm:justify-center p-2 sm:p-0 pointer-events-none sm:pointer-events-auto'>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="flex items-center gap-2 cursor-pointer pointer-events-auto shadow-md"
+                      onClick={() => removeSlider($id, sliderImage)}
+                    >
+                      <IconTrash className="w-4 h-4" /> <span className="hidden sm:inline">Delete</span>
+                    </Button>
+                  </div>
+                </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className='flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl bg-secondary/5'>
+              <div className='w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4'>
+                <IconPlus className='w-8 h-8 text-muted-foreground' />
+              </div>
+              <p className='text-lg font-medium text-foreground'>No sliders found</p>
+              <p className='text-sm text-muted-foreground text-center mt-1 max-w-sm'>
+                You haven't uploaded any slider images yet. Click "Add New Slider" to get started.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Featured Product Controller */}
@@ -253,40 +337,108 @@ function Company() {
         <p className='flex justify-start items-start text-xl font-semibold'>Featured Product Controller</p>
         
         {/* Form for Adding */}
-        <div className='flex flex-col mt-2 p-4 border rounded-lg bg-card'>
-          <h3 className='text-lg font-medium mb-2'>Add New Featured Product</h3>
-          <input
-            type="text"
-            placeholder='Title'
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            className='border bg-background rounded-lg p-2 w-full mb-2'
-          />
-          <div className='flex gap-2 mb-2'>
-            <select
-              value={selectedProductId}
-              onChange={(e) => setSelectedProductId(e.target.value)}
-              className='border bg-background rounded-lg p-2 w-full'
-            >
-              <option value="">Select a Product</option>
-              {allProducts.map((p) => (
-                <option key={p.$id} value={p.$id}>{p.productName}</option>
-              ))}
-            </select>
-            <Button onClick={addNewProductId} size="icon"><IconPlus /></Button>
-          </div>
-          <div className='flex flex-wrap gap-2 mb-4'>
-            {newProductIds.map(id => (
-              <div key={id} className='flex items-center gap-2 bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm'>
-                {allProducts.find(p => p.$id === id)?.productName || id}
-                <IconTrash className='w-4 h-4 cursor-pointer' onClick={() => removeNewProductId(id)} />
+        <div className='flex flex-col mt-2 p-4 border rounded-xl shadow-sm bg-card'>
+          <h3 className='text-lg font-medium mb-4 text-primary'>Add New Featured Section</h3>
+          
+          <div className='flex flex-col gap-4'>
+            <div>
+              <label className='block text-sm font-medium mb-1'>Section Title</label>
+              <input
+                type="text"
+                placeholder='e.g. Bestsellers, New Arrivals'
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                className='border bg-background rounded-lg p-2 w-full'
+              />
+            </div>
+            
+            <div className='border rounded-lg p-3 bg-secondary/20'>
+              <label className='block text-sm font-medium mb-2'>Selected Products ({newProductIds.length})</label>
+              {newProductIds.length === 0 ? (
+                <p className='text-sm text-muted-foreground italic'>No products selected yet.</p>
+              ) : (
+                <div className='flex flex-wrap gap-2'>
+                  {newProductIds.map(id => {
+                    const p = allProducts.find(prod => prod.$id === id);
+                    return (
+                      <div key={id} className='flex items-center gap-2 bg-background border border-border shadow-sm rounded-md p-1 pr-2'>
+                        {p?.images?.[0] ? <img src={p.images[0]} alt={p.productName} className='w-8 h-8 object-cover rounded' /> : <div className='w-8 h-8 bg-muted rounded'></div>}
+                        <span className='text-sm font-medium line-clamp-1 max-w-37.5'>{p?.productName || id}</span>
+                        <IconX className='w-4 h-4 cursor-pointer text-muted-foreground hover:text-destructive transition-colors' onClick={() => removeNewProductId(id)} />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className='block text-sm font-medium mb-1'>Search & Filter Products</label>
+              <div className='flex flex-col sm:flex-row gap-2 mb-2'>
+                <input 
+                  type="text" 
+                  placeholder='Type product name to search...' 
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  className='border bg-background rounded-lg p-2 flex-1 focus:outline-none focus:ring-1 focus:ring-primary'
+                />
+                <select 
+                  value={productCategoryFilter}
+                  onChange={(e) => {
+                    setProductCategoryFilter(e.target.value);
+                    setProductSubcategoryFilter('');
+                  }}
+                  className='border bg-background rounded-lg p-2 w-full sm:w-1/4 focus:outline-none focus:ring-1 focus:ring-primary'
+                >
+                  <option value="">All Categories</option>
+                  {uniqueCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+                <select 
+                  value={productSubcategoryFilter}
+                  onChange={(e) => setProductSubcategoryFilter(e.target.value)}
+                  className='border bg-background rounded-lg p-2 w-full sm:w-1/4 focus:outline-none focus:ring-1 focus:ring-primary'
+                >
+                  <option value="">All Subcategories</option>
+                  {availableSubcategories.map(subcat => <option key={subcat} value={subcat}>{subcat}</option>)}
+                </select>
               </div>
-            ))}
-          </div>
-          <div className='flex gap-2 justify-end'>
-            <Button onClick={handleAddFeaturedProduct} disabled={!newTitle || newProductIds.length === 0}>
-              Add
-            </Button>
+              <div className='max-h-60 overflow-y-auto border rounded-lg bg-background p-2 flex flex-col gap-2'>
+                {allProducts
+                  .filter(p => !newProductIds.includes(p.$id) && 
+                               (!productSearch || p.productName.toLowerCase().includes(productSearch.toLowerCase())) &&
+                               (!productCategoryFilter || p.category === productCategoryFilter) &&
+                               (!productSubcategoryFilter || p.subcategory === productSubcategoryFilter)
+                  )
+                  .map(p => (
+                    <div key={p.$id} className='flex justify-between items-center border p-2 rounded-lg hover:bg-secondary/30 transition-colors'>
+                      <div className='flex items-center gap-3'>
+                         {p.images?.[0] ? <img src={p.images[0]} alt={p.productName} className='w-10 h-10 object-cover rounded-md shadow-sm' /> : <div className='w-10 h-10 bg-muted rounded-md shadow-sm'></div>}
+                         <div className='flex flex-col'>
+                           <span className='font-medium text-sm line-clamp-1'>{p.productName}</span>
+                           <span className='text-xs text-muted-foreground'>{p.category}{p.subcategory ? ` > ${p.subcategory}` : ''}</span>
+                         </div>
+                      </div>
+                      <Button size="sm" variant="secondary" onClick={() => setNewProductIds([...newProductIds, p.$id])}>
+                        <IconPlus className="w-4 h-4 mr-1" /> Add
+                      </Button>
+                    </div>
+                  ))
+                }
+                {allProducts.filter(p => !newProductIds.includes(p.$id) && 
+                               (!productSearch || p.productName.toLowerCase().includes(productSearch.toLowerCase())) &&
+                               (!productCategoryFilter || p.category === productCategoryFilter) &&
+                               (!productSubcategoryFilter || p.subcategory === productSubcategoryFilter)
+                  ).length === 0 && (
+                  <p className='text-center text-sm text-muted-foreground py-4'>No products found matching filters.</p>
+                )}
+              </div>
+            </div>
+
+            <div className='flex justify-end mt-2'>
+              <Button onClick={handleAddFeaturedProduct} disabled={!newTitle || newProductIds.length === 0} className='w-full sm:w-auto'>
+                Save Featured Section
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -295,39 +447,131 @@ function Company() {
           {featuredProducts.map((product) => (
             isEditing === product.$id ? (
               // Editing UI
-              <div key={product.$id} className='flex flex-col mt-2 p-4 border-2 border-primary rounded-lg bg-card'>
-                <h3 className='text-lg font-medium mb-2'>Edit Featured Product</h3>
-                <input type="text" placeholder='Title' value={currentTitle} onChange={(e) => setCurrentTitle(e.target.value)} className='border bg-background rounded-lg p-2 w-full mb-2' />
-                <div className='flex gap-2 mb-2'>
-                  <select value={selectedProductId} onChange={(e) => setSelectedProductId(e.target.value)} className='border bg-background rounded-lg p-2 w-full'>
-                    <option value="">Select a Product</option>
-                    {allProducts.map(p => (<option key={p.$id} value={p.$id}>{p.productName}</option>))}
-                  </select>
-                  <Button onClick={addProductId} size="icon"><IconPlus /></Button>
-                </div>
-                <div className='flex flex-wrap gap-2 mb-4'>
-                  {currentProductIds.map(id => (
-                    <div key={id} className='flex items-center gap-2 bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm'>
-                      {allProducts.find(p => p.$id === id)?.productName || id}
-                      <IconTrash className='w-4 h-4 cursor-pointer' onClick={() => removeProductId(id)} />
+              <div key={product.$id} className='flex flex-col mt-4 p-4 border-2 border-primary rounded-xl shadow-sm bg-card'>
+                <h3 className='text-lg font-medium mb-4 text-primary'>Edit Featured Section</h3>
+                
+                <div className='flex flex-col gap-4'>
+                  <div>
+                    <label className='block text-sm font-medium mb-1'>Section Title</label>
+                    <input 
+                      type="text" 
+                      placeholder='Title' 
+                      value={currentTitle} 
+                      onChange={(e) => setCurrentTitle(e.target.value)} 
+                      className='border bg-background rounded-lg p-2 w-full' 
+                    />
+                  </div>
+
+                  <div className='border rounded-lg p-3 bg-secondary/20'>
+                    <label className='block text-sm font-medium mb-2'>Selected Products ({currentProductIds.length})</label>
+                    {currentProductIds.length === 0 ? (
+                      <p className='text-sm text-muted-foreground italic'>No products selected.</p>
+                    ) : (
+                      <div className='flex flex-wrap gap-2'>
+                        {currentProductIds.map(id => {
+                          const p = allProducts.find(prod => prod.$id === id);
+                          return (
+                            <div key={id} className='flex items-center gap-2 bg-background border border-border shadow-sm rounded-md p-1 pr-2'>
+                              {p?.images?.[0] ? <img src={p.images[0]} alt={p.productName} className='w-8 h-8 object-cover rounded' /> : <div className='w-8 h-8 bg-muted rounded'></div>}
+                              <span className='text-sm font-medium line-clamp-1 max-w-37.5'>{p?.productName || id}</span>
+                              <IconX className='w-4 h-4 cursor-pointer text-muted-foreground hover:text-destructive transition-colors' onClick={() => removeProductId(id)} />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className='block text-sm font-medium mb-1'>Search & Filter Products</label>
+                    <div className='flex flex-col sm:flex-row gap-2 mb-2'>
+                      <input 
+                        type="text" 
+                        placeholder='Type product name to search...' 
+                        value={productSearch}
+                        onChange={(e) => setProductSearch(e.target.value)}
+                        className='border bg-background rounded-lg p-2 flex-1 focus:outline-none focus:ring-1 focus:ring-primary'
+                      />
+                      <select 
+                        value={productCategoryFilter}
+                        onChange={(e) => {
+                          setProductCategoryFilter(e.target.value);
+                          setProductSubcategoryFilter('');
+                        }}
+                        className='border bg-background rounded-lg p-2 w-full sm:w-1/4 focus:outline-none focus:ring-1 focus:ring-primary'
+                      >
+                        <option value="">All Categories</option>
+                        {uniqueCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                      </select>
+                      <select 
+                        value={productSubcategoryFilter}
+                        onChange={(e) => setProductSubcategoryFilter(e.target.value)}
+                        className='border bg-background rounded-lg p-2 w-full sm:w-1/4 focus:outline-none focus:ring-1 focus:ring-primary'
+                      >
+                        <option value="">All Subcategories</option>
+                        {availableSubcategories.map(subcat => <option key={subcat} value={subcat}>{subcat}</option>)}
+                      </select>
                     </div>
-                  ))}
-                </div>
-                <div className='flex gap-2 justify-end'>
-                  <Button variant="outline" onClick={resetFeaturedProductForm}>Cancel</Button>
-                  <Button onClick={handleUpdateFeaturedProduct} disabled={!currentTitle || currentProductIds.length === 0}>Update</Button>
+                    <div className='max-h-60 overflow-y-auto border rounded-lg bg-background p-2 flex flex-col gap-2'>
+                      {allProducts
+                        .filter(p => !currentProductIds.includes(p.$id) && 
+                                     (!productSearch || p.productName.toLowerCase().includes(productSearch.toLowerCase())) &&
+                                     (!productCategoryFilter || p.category === productCategoryFilter) &&
+                                     (!productSubcategoryFilter || p.subcategory === productSubcategoryFilter)
+                        )
+                        .map(p => (
+                          <div key={p.$id} className='flex justify-between items-center border p-2 rounded-lg hover:bg-secondary/30 transition-colors'>
+                            <div className='flex items-center gap-3'>
+                               {p.images?.[0] ? <img src={p.images[0]} alt={p.productName} className='w-10 h-10 object-cover rounded-md shadow-sm' /> : <div className='w-10 h-10 bg-muted rounded-md shadow-sm'></div>}
+                               <div className='flex flex-col'>
+                                 <span className='font-medium text-sm line-clamp-1'>{p.productName}</span>
+                                 <span className='text-xs text-muted-foreground'>{p.category}{p.subcategory ? ` > ${p.subcategory}` : ''}</span>
+                               </div>
+                            </div>
+                            <Button size="sm" variant="secondary" onClick={() => setCurrentProductIds([...currentProductIds, p.$id])}>
+                              <IconPlus className="w-4 h-4 mr-1" /> Add
+                            </Button>
+                          </div>
+                        ))
+                      }
+                      {allProducts.filter(p => !currentProductIds.includes(p.$id) && 
+                                     (!productSearch || p.productName.toLowerCase().includes(productSearch.toLowerCase())) &&
+                                     (!productCategoryFilter || p.category === productCategoryFilter) &&
+                                     (!productSubcategoryFilter || p.subcategory === productSubcategoryFilter)
+                        ).length === 0 && (
+                        <p className='text-center text-sm text-muted-foreground py-4'>No products found matching filters.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className='flex gap-2 justify-end mt-2'>
+                    <Button variant="outline" onClick={resetFeaturedProductForm} className='w-full sm:w-auto'>Cancel</Button>
+                    <Button onClick={handleUpdateFeaturedProduct} disabled={!currentTitle || currentProductIds.length === 0} className='w-full sm:w-auto'>Update Section</Button>
+                  </div>
                 </div>
               </div>
             ) : (
               // Display UI
-              <div key={product.$id} className='p-4 border rounded-lg bg-card flex justify-between items-start'>
-                <div>
-                  <p className='font-bold text-lg'>{product.title}</p>
-                  <p className='text-sm text-muted-foreground'>Products: {product.productIds.map(id => allProducts.find(p => p.$id === id)?.productName || id).join(', ')}</p>
+              <div key={product.$id} className='p-5 border rounded-xl shadow-sm bg-card flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-md transition-shadow'>
+                <div className='flex-1'>
+                  <p className='font-bold text-xl text-primary mb-3'>{product.title}</p>
+                  <div className='flex flex-wrap gap-3'>
+                    {product.productIds.length > 0 ? product.productIds.map(id => {
+                      const p = allProducts.find(prod => prod.$id === id);
+                      return (
+                        <div key={id} className='flex items-center gap-2 bg-secondary/30 border border-border rounded-lg p-2 pr-3' title={p?.productName || id}>
+                          {p?.images?.[0] ? <img src={p.images[0]} alt={p.productName} className='w-10 h-10 object-cover rounded-md shadow-sm' /> : <div className='w-10 h-10 bg-muted rounded-md shadow-sm'></div>}
+                          <span className='text-sm font-medium line-clamp-1 max-w-30'>{p?.productName || id}</span>
+                        </div>
+                      )
+                    }) : (
+                      <p className='text-sm text-muted-foreground italic'>No products in this section.</p>
+                    )}
+                  </div>
                 </div>
-                <div className='flex gap-2'>
-                  <Button size="icon" variant="outline" onClick={() => startEditing(product)}><IconEdit className="w-4 h-4" /></Button>
-                  <Button size="icon" variant="destructive" onClick={() => handleDeleteFeaturedProduct(product.$id)}><IconTrash /></Button>
+                <div className='flex gap-2 mt-2 sm:mt-0'>
+                  <Button size="icon" variant="outline" className='hover:bg-primary/10' onClick={() => startEditing(product)}><IconEdit className="w-5 h-5 text-primary" /></Button>
+                  <Button size="icon" variant="destructive" className='hover:bg-red-600' onClick={() => handleDeleteFeaturedProduct(product.$id)}><IconTrash className="w-5 h-5" /></Button>
                 </div>
               </div>
             )

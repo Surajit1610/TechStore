@@ -3,9 +3,26 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { IconCheck, IconX, IconLoader2, IconTruck, IconPackage, IconDownload } from "@tabler/icons-react";
+import {
+  IconCheck,
+  IconX,
+  IconLoader2,
+  IconTruck,
+  IconPackage,
+  IconDownload,
+  IconChevronDown,
+  IconChevronUp,
+  IconMapPin,
+  IconPhone,
+  IconUser,
+  IconReceipt,
+  IconClock,
+  IconBox
+} from "@tabler/icons-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 
 type OrderItem = {
   $id: string;
@@ -56,13 +73,13 @@ type OnlineOrder = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  placed: "bg-blue-100 text-blue-800",
-  processing: "bg-yellow-100 text-yellow-800",
-  shipped: "bg-purple-100 text-purple-800",
-  delivered: "bg-green-100 text-green-800",
-  "cancelled by customer": "bg-red-100 text-red-800",
-  "cancelled by seller": "bg-red-100 text-red-800",
-  refunded: "bg-orange-100 text-orange-800",
+  placed: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800",
+  processing: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800",
+  shipped: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800",
+  delivered: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800",
+  "cancelled by customer": "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800",
+  "cancelled by seller": "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800",
+  refunded: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800",
 };
 
 export default function OnlineOrdersPage() {
@@ -107,7 +124,6 @@ export default function OnlineOrdersPage() {
         const res = await axios.post("/api/company/shiprocket-auth");
         setShiprocketToken(res.data.token);
         console.log("Shiprocket token obtained");
-        // console.log(res.data.token);
       } catch (err) {
         console.error("Failed to get Shiprocket token:", err);
         toast.error("Failed to authenticate with Shiprocket");
@@ -185,11 +201,6 @@ export default function OnlineOrdersPage() {
       return;
     }
 
-    // if (!shipmentData.channel_id) {
-    //   toast.error("Please enter channel ID");
-    //   return;
-    // }
-
     const processing = new Set(processingOrders);
     processing.add(selectedOrder.$id);
     setProcessingOrders(processing);
@@ -209,7 +220,6 @@ export default function OnlineOrdersPage() {
           orderId: selectedOrder.$id,
           status: "processing",
           shiprocketOrderId: `${res.data.order_id}`,
-        //   awb: res.data.awb_code,
         });
 
         // Refresh orders
@@ -249,20 +259,29 @@ export default function OnlineOrdersPage() {
   };
 
   return (
-    <div className="w-full flex flex-col md:gap-6 sm:gap-4 gap-2 md:p-6 sm:p-4 p-2 max-w-7xl mx-auto">
+    <div className="w-full flex flex-col gap-6 p-4 md:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center sm:gap-4 gap-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
         <div>
-          <h1 className="md:text-3xl sm:text-2xl text-xl font-bold text-gray-900 dark:text-white">Online Orders</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage and ship customer orders</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <IconBox className="text-primary w-6 h-6 sm:w-8 sm:h-8" />
+            </div>
+            Online Orders
+          </h1>
+          <p className="text-sm text-muted-foreground mt-2">Manage, process, and ship your customer orders</p>
         </div>
-        <div className="px-3 py-1 bg-green-100 text-green-800 rounded-lg text-sm font-semibold">
-          {orders.length} orders
+        <div className="px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-semibold flex items-center gap-2 border border-primary/20">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
+          </span>
+          {orders.length} Active Orders
         </div>
       </div>
 
       {/* Status Filter */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
+      <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
         {["all", "placed", "processing", "shipped", "delivered", "cancelled by customer", "refunded", "cancelled by seller"].map(
           (status) => (
             <button
@@ -271,10 +290,10 @@ export default function OnlineOrdersPage() {
                 setSelectedStatus(status);
                 setCurrentPage(1);
               }}
-              className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition ${
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 border ${
                 selectedStatus === status
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300"
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-background text-muted-foreground border-border hover:bg-accent hover:text-accent-foreground"
               }`}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -286,286 +305,352 @@ export default function OnlineOrdersPage() {
       {/* Orders List */}
       <div className="space-y-4">
         {loading ? (
-          <div className="text-center py-12">
-            <IconLoader2 className="animate-spin mx-auto mb-2" size={32} />
-            <p>Loading orders...</p>
-          </div>
+          <Card className="py-16 flex flex-col items-center justify-center text-muted-foreground">
+            <IconLoader2 className="animate-spin mb-4" size={48} />
+            <p className="text-lg font-medium">Loading your orders...</p>
+          </Card>
         ) : orders.length === 0 ? (
-          <div className="text-center py-12 bg-card rounded-lg border">
-            <p className="text-gray-600 dark:text-gray-400">No orders found</p>
-          </div>
+          <Card className="py-20 flex flex-col items-center justify-center text-muted-foreground bg-muted/20 border-dashed">
+            <div className="p-4 bg-background rounded-full mb-4 border border-dashed">
+              <IconPackage size={48} className="text-muted-foreground/50" />
+            </div>
+            <p className="text-xl font-semibold text-foreground">No orders found</p>
+            <p className="text-sm mt-2 text-muted-foreground">Try changing the filter or wait for new orders.</p>
+          </Card>
         ) : (
           orders.map((order) => (
-            <div key={order.$id} className="bg-card rounded-lg border shadow-sm">
+            <Card key={order.$id} className={`overflow-hidden transition-all duration-200 border ${expandedOrder === order.$id ? 'ring-2 ring-primary/20 shadow-md' : 'hover:shadow-sm'}`}>
               {/* Order Header */}
               <div
                 onClick={() => setExpandedOrder(expandedOrder === order.$id ? null : order.$id)}
-                className="sm:p-4 p-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition rounded-t-lg"
+                className="p-4 sm:p-6 cursor-pointer bg-card hover:bg-accent/30 transition-colors"
               >
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center sm:gap-3 gap-2">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <p className="font-bold text-lg">{order.$id.substring(0, 12)}...</p>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[order.status]}`}>
-                        {order.status}
-                      </span>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="bg-primary/10 p-3 rounded-full hidden sm:block">
+                      <IconReceipt className="text-primary w-6 h-6" />
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Customer: {order.customer.name} • {order.customer.phone}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Order Date: {new Date(order.$createdAt).toLocaleDateString()}
-                    </p>
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-3 mb-2">
+                        <p className="font-semibold text-lg text-foreground">Order #{order.$id.substring(0, 8)}</p>
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[order.status] || STATUS_COLORS['placed']}`}>
+                          {order.status}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1.5"><IconUser size={16}/> <span className="font-medium text-foreground">{order.customer.name}</span></div>
+                        <span className="hidden sm:inline text-muted-foreground/30">•</span>
+                        <div className="flex items-center gap-1.5"><IconClock size={16}/> {new Date(order.$createdAt).toLocaleDateString()}</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="sm:text-right text-left">
-                    <p className="font-bold text-xl text-green-600">₹{order.totalAmount.toFixed(2)}</p>
-                    <p className="text-xs text-gray-500">{order.paymentStatus}</p>
+                  <div className="flex items-center justify-between w-full sm:w-auto sm:flex-col sm:items-end gap-2 sm:gap-1.5 pt-2 sm:pt-0 border-t sm:border-0">
+                    <div className="text-left sm:text-right">
+                      <p className="font-bold text-xl text-foreground">₹{order.totalAmount.toFixed(2)}</p>
+                      <div className="flex items-center gap-1.5 mt-1 justify-start sm:justify-end">
+                        <span className={`w-2 h-2 rounded-full ${order.paymentStatus === 'paid' ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{order.paymentStatus} ({order.paymentType})</p>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="icon" className="sm:mt-2 -mr-2 text-muted-foreground hover:text-foreground hidden sm:inline-flex">
+                      {expandedOrder === order.$id ? <IconChevronUp size={20} /> : <IconChevronDown size={20} />}
+                    </Button>
                   </div>
                 </div>
               </div>
 
               {/* Expanded Details */}
               {expandedOrder === order.$id && (
-                <div className="border-t sm:p-4 p-2 rounded-b-2xl space-y-4 bg-gray-50 dark:bg-gray-900">
-                  {/* Customer Details */}
-                  <div>
-                    <h3 className="font-semibold mb-2">Delivery Address</h3>
-                    <div className="text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 p-3 rounded">
-                      <p>{order.customer.name}</p>
-                      <p>{order.addressData.phone}</p>
-                      <p>
-                        {order.addressData.location}
-                      </p>
-                      <p>
-                        {order.addressData.city}, {order.addressData.state} {order.addressData.pincode}
-                      </p>
+                <div className="border-t bg-muted/10 p-4 sm:p-6 space-y-6 animate-in slide-in-from-top-2 duration-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Customer Details */}
+                    <div className="space-y-3">
+                      <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                        <IconMapPin size={18} className="text-primary" /> Delivery Details
+                      </h3>
+                      <Card className="p-4 shadow-none bg-background border-muted">
+                        <div className="space-y-3 text-sm">
+                          <div className="flex items-center gap-3 font-medium text-foreground">
+                            <div className="bg-muted p-1.5 rounded-md"><IconUser size={16} className="text-muted-foreground" /></div>
+                            {order.customer.name}
+                          </div>
+                          <div className="flex items-center gap-3 text-muted-foreground">
+                            <div className="bg-muted p-1.5 rounded-md"><IconPhone size={16} /></div>
+                            {order.addressData.phone}
+                          </div>
+                          <div className="flex items-start gap-3 text-muted-foreground mt-3 pt-3 border-t">
+                            <div className="bg-muted p-1.5 rounded-md shrink-0"><IconMapPin size={16} /></div>
+                            <div className="space-y-1">
+                              <p className="font-medium text-foreground">{order.addressData.location}</p>
+                              <p>{order.addressData.city}, {order.addressData.state}</p>
+                              <p>PIN: {order.addressData.pincode}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    </div>
+
+                    {/* Order Summary */}
+                    <div className="space-y-3">
+                      <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                        <IconReceipt size={18} className="text-primary" /> Payment Summary
+                      </h3>
+                      <Card className="p-4 shadow-none bg-background border-muted">
+                        <div className="space-y-3 text-sm">
+                          <div className="flex justify-between text-muted-foreground">
+                            <span>Subtotal</span>
+                            <span>₹{(order.totalAmount - order.shipping_charge).toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-muted-foreground">
+                            <span>Shipping</span>
+                            <span>₹{order.shipping_charge.toFixed(2)}</span>
+                          </div>
+                          <div className="border-t pt-3 mt-1 flex justify-between font-bold text-base text-foreground">
+                            <span>Total Amount</span>
+                            <span className="text-primary">₹{order.totalAmount.toFixed(2)}</span>
+                          </div>
+                          {order.awb && (
+                            <div className="pt-4 mt-2 border-t">
+                              <div className="bg-primary/5 border border-primary/20 text-primary p-3 rounded-lg flex items-center justify-between text-sm">
+                                <span className="font-medium">Tracking AWB</span>
+                                <span className="font-mono font-bold tracking-wider">{order.awb}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </Card>
                     </div>
                   </div>
 
                   {/* Items */}
-                  <div>
-                    <h3 className="font-semibold mb-2">Items ({order.items.length})</h3>
-                    <div className="space-y-2">
-                      {order.items.map((item) => (
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                      <IconBox size={18} className="text-primary" /> Order Items ({order.items.length})
+                    </h3>
+                    <div className="rounded-lg border bg-background overflow-hidden">
+                      {order.items.map((item, idx) => (
                         <div
                           key={item.$id}
-                          className="bg-white dark:bg-gray-800 p-3 rounded flex justify-between items-center"
+                          className={`p-4 flex justify-between items-center sm:text-sm text-xs ${idx !== order.items.length - 1 ? 'border-b' : ''} hover:bg-muted/50 transition-colors`}
                         >
-                          <div>
-                            <p className="font-medium">{item.productName}</p>
-                            <p className="text-sm text-gray-500">
-                              Qty: {item.quantity} × ₹{item.price}
+                          <div className="flex flex-col gap-1">
+                            <p className="font-semibold text-foreground">{item.productName}</p>
+                            <p className="text-muted-foreground">
+                              Qty: {item.quantity} × ₹{item.price.toFixed(2)}
                             </p>
                           </div>
-                          <p className="font-semibold">₹{(item.quantity * item.price).toFixed(2)}</p>
+                          <div className="font-bold text-foreground bg-muted px-3 py-1.5 rounded-md">
+                            ₹{(item.quantity * item.price).toFixed(2)}
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Order Summary */}
-                  <div className="bg-white dark:bg-gray-800 p-3 rounded space-y-2">
-                    <div className="flex justify-between">
-                      <span>Subtotal:</span>
-                      <span>₹{(order.totalAmount - order.shipping_charge).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Shipping:</span>
-                      <span>₹{order.shipping_charge.toFixed(2)}</span>
-                    </div>
-                    <div className="border-t pt-2 flex justify-between font-bold">
-                      <span>Total:</span>
-                      <span>₹{order.totalAmount.toFixed(2)}</span>
-                    </div>
-                    {order.awb && (
-                      <div className="pt-2 border-t">
-                        <p className="text-sm">
-                          AWB: <span className="font-mono font-semibold">{order.awb}</span>
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
                   {/* Actions */}
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex flex-wrap gap-3 pt-4 border-t">
                     {order.status === "placed" && (
                       <>
-                        <button
+                        <Button
                           onClick={() => handleCreateShipment(order)}
                           disabled={processingOrders.has(order.$id)}
-                          className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60"
+                          className="flex-1 sm:flex-none shadow-sm"
                         >
                           {processingOrders.has(order.$id) ? (
-                            <IconLoader2 size={16} className="animate-spin" />
+                            <IconLoader2 size={18} className="animate-spin mr-2" />
                           ) : (
-                            <IconTruck size={16} />
+                            <IconTruck size={18} className="mr-2" />
                           )}
                           Create Shipment
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="destructive"
                           onClick={() => handleUpdateStatus(order.$id, "cancelled by seller")}
                           disabled={processingOrders.has(order.$id)}
-                          className="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-60"
+                          className="flex-1 sm:flex-none shadow-sm"
                         >
-                          Cancel
-                        </button>
+                          Cancel Order
+                        </Button>
                       </>
                     )}
 
                     {order.status === "processing" && (
-                      <button
+                      <Button
                         onClick={() => handleUpdateStatus(order.$id, "shipped")}
                         disabled={processingOrders.has(order.$id)}
-                        className="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-60"
+                        className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white shadow-sm"
                       >
                         {processingOrders.has(order.$id) ? (
-                          <IconLoader2 size={16} className="animate-spin" />
+                          <IconLoader2 size={18} className="animate-spin mr-2" />
                         ) : (
-                          <IconPackage size={16} />
+                          <IconPackage size={18} className="mr-2" />
                         )}
                         Mark as Shipped
-                      </button>
+                      </Button>
                     )}
 
                     {order.status === "shipped" && (
-                      <button
+                      <Button
                         onClick={() => handleUpdateStatus(order.$id, "delivered")}
                         disabled={processingOrders.has(order.$id)}
-                        className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-60"
+                        className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white shadow-sm"
                       >
                         {processingOrders.has(order.$id) ? (
-                          <IconLoader2 size={16} className="animate-spin" />
+                          <IconLoader2 size={18} className="animate-spin mr-2" />
                         ) : (
-                          <IconCheck size={16} />
+                          <IconCheck size={18} className="mr-2" />
                         )}
                         Mark as Delivered
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
               )}
-            </div>
+            </Card>
           ))
         )}
       </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-between items-center sm:gap-4 gap-3">
-          <p className="text-sm text-gray-600">
-            Page {currentPage} of {totalPages}
+        <Card className="flex flex-col sm:flex-row justify-between items-center sm:gap-4 gap-4 mt-4 p-4 shadow-sm border-muted">
+          <p className="text-sm font-medium text-muted-foreground">
+            Page <span className="text-foreground font-bold">{currentPage}</span> of <span className="text-foreground font-bold">{totalPages}</span>
           </p>
-          <div className="flex gap-2">
-            <button
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              className="flex-1 sm:flex-none"
               onClick={() => fetchOrders(currentPage - 1, selectedStatus)}
               disabled={currentPage <= 1}
-              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50"
             >
               Previous
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 sm:flex-none"
               onClick={() => fetchOrders(currentPage + 1, selectedStatus)}
               disabled={currentPage >= totalPages}
-              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50"
             >
               Next
-            </button>
+            </Button>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Shipment Modal */}
       {showShipmentModal && selectedOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 sm:p-4 p-2">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto md:p-6 sm:p-4 p-2">
-            <h2 className="text-2xl font-bold mb-4">Create Shiprocket Shipment</h2>
-
-            <div className="space-y-4">
-              <div>
-                <Label className="text-sm font-semibold">Channel ID</Label>
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6 animate-in fade-in duration-200">
+          <Card className="max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border-muted">
+            <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/30 px-6 py-4">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <IconTruck className="text-primary" />
+                Create Shiprocket Shipment
+              </CardTitle>
+              <Button variant="ghost" size="icon" onClick={() => setShowShipmentModal(false)} className="-mr-2 text-muted-foreground hover:text-foreground">
+                <IconX size={20} />
+              </Button>
+            </CardHeader>
+            <CardContent className="overflow-y-auto p-6 space-y-6">
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                  Channel ID <span className="text-xs font-normal text-muted-foreground">(Optional)</span>
+                </Label>
                 <Input
                   value={shipmentData.channel_id}
                   onChange={(e) => setShipmentData({ ...shipmentData, channel_id: e.target.value })}
                   placeholder="e.g., 123456"
+                  className="bg-muted/50 border-muted"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm">Length (cm)</Label>
-                  <Input
-                    type="number"
-                    value={shipmentData.length}
-                    onChange={(e) => setShipmentData({ ...shipmentData, length: parseFloat(e.target.value) })}
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm">Breadth (cm)</Label>
-                  <Input
-                    type="number"
-                    value={shipmentData.breadth}
-                    onChange={(e) => setShipmentData({ ...shipmentData, breadth: parseFloat(e.target.value) })}
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm">Height (cm)</Label>
-                  <Input
-                    type="number"
-                    value={shipmentData.height}
-                    onChange={(e) => setShipmentData({ ...shipmentData, height: parseFloat(e.target.value) })}
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm">Weight (kg)</Label>
-                  <Input
-                    type="number"
-                    value={shipmentData.weight}
-                    onChange={(e) => setShipmentData({ ...shipmentData, weight: parseFloat(e.target.value) })}
-                  />
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm flex items-center gap-2 text-foreground border-b pb-2">
+                  <IconPackage size={16} className="text-primary" /> Package Dimensions
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium text-muted-foreground">Length (cm)</Label>
+                    <Input
+                      type="number"
+                      value={shipmentData.length}
+                      onChange={(e) => setShipmentData({ ...shipmentData, length: parseFloat(e.target.value) })}
+                      className="bg-muted/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium text-muted-foreground">Breadth (cm)</Label>
+                    <Input
+                      type="number"
+                      value={shipmentData.breadth}
+                      onChange={(e) => setShipmentData({ ...shipmentData, breadth: parseFloat(e.target.value) })}
+                      className="bg-muted/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium text-muted-foreground">Height (cm)</Label>
+                    <Input
+                      type="number"
+                      value={shipmentData.height}
+                      onChange={(e) => setShipmentData({ ...shipmentData, height: parseFloat(e.target.value) })}
+                      className="bg-muted/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium text-muted-foreground">Weight (kg)</Label>
+                    <Input
+                      type="number"
+                      value={shipmentData.weight}
+                      onChange={(e) => setShipmentData({ ...shipmentData, weight: parseFloat(e.target.value) })}
+                      className="bg-muted/50"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="border-t pt-4">
-                <h3 className="font-semibold mb-2">Order Items</h3>
-                <div className="space-y-2 bg-gray-50 dark:bg-gray-800 p-3 rounded">
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm flex items-center gap-2 text-foreground border-b pb-2">
+                  <IconBox size={16} className="text-primary" /> Order Items
+                </h3>
+                <div className="space-y-2 bg-muted/30 p-4 rounded-lg border border-muted/50">
                   {shipmentData.order_items.map((item, idx) => (
-                    <div key={idx} className="text-sm">
-                      <p className="font-medium">{item.name}</p>
-                      <p className="text-gray-500">
+                    <div key={idx} className={`flex justify-between items-center text-sm ${idx !== shipmentData.order_items.length - 1 ? 'border-b border-muted/50 pb-2 mb-2' : ''}`}>
+                      <p className="font-medium text-foreground">{item.name}</p>
+                      <p className="text-muted-foreground font-medium bg-background px-2 py-1 rounded-md border border-muted/50">
                         {item.units} × ₹{item.selling_price.toFixed(2)}
                       </p>
                     </div>
                   ))}
                 </div>
               </div>
-
-              <div className="flex gap-2 pt-4">
-                <button
-                  onClick={handleSubmitShipment}
-                  disabled={processingOrders.has(selectedOrder.$id)}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60"
-                >
-                  {processingOrders.has(selectedOrder.$id) ? (
-                    <>
-                      <IconLoader2 size={16} className="animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <IconDownload size={16} />
-                      Create Shipment
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={() => setShowShipmentModal(false)}
-                  className="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+            <CardFooter className="bg-muted/30 border-t px-6 py-4 gap-3 justify-end rounded-b-xl">
+              <Button
+                variant="outline"
+                onClick={() => setShowShipmentModal(false)}
+                className="w-full sm:w-auto"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmitShipment}
+                disabled={processingOrders.has(selectedOrder.$id)}
+                className="w-full sm:w-auto shadow-sm"
+              >
+                {processingOrders.has(selectedOrder.$id) ? (
+                  <>
+                    <IconLoader2 size={18} className="animate-spin mr-2" />
+                    Creating Shipment...
+                  </>
+                ) : (
+                  <>
+                    <IconDownload size={18} className="mr-2" />
+                    Create Shipment
+                  </>
+                )}
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
       )}
     </div>
