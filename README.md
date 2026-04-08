@@ -50,6 +50,3 @@ The Fix: When an order is placed, you must take a "snapshot" of the cart. Instea
 
 Create an order_items table with columns: orderId, productId, productName, quantity, priceAtPurchase.
 (Alternative) Store a stringified JSON array in the online_orders table containing these details.
-
-5. Minor Typo
-Where: customer_payment.table.ts You have named a column "transitionId". It should probably be "transactionId". It's a minor typo but good to fix early to avoid confusion for future developers working on the codebase.

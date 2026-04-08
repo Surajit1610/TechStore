@@ -35,18 +35,28 @@ type Customer = {
   name: string;
   email: string;
   phone: string;
+  state?: string;
+  district?: string;
+  block?: string;
+  village?: string;
+  pincode?: string;
+};
+
+type Address = {
+  $id: string;
+  customerId: string;
+  location: string;
+  city: string;
   state: string;
-  district: string;
-  block: string;
-  village: string;
   pincode: string;
+  phone: string;
 };
 
 type Order = {
   $id: string;
   customerId: string;
   customer: Customer;
-  address: string;
+  address?: Address | string;
   items: Item[];
   totalAmount: number;
   shipping_charge: number;
@@ -84,11 +94,18 @@ export default function OrderDetailsPage() {
     if (!orderId) return;
     setLoading(true);
     try {
-      const res = await axios.post("/api/user/online-orders/order", {orderId});
-      setOrder(res.data);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load order details");
+      const res = await axios.post("/api/user/online-orders/order", { orderId });
+      if (res.data && res.data.$id) {
+        setOrder(res.data);
+      } else {
+        setOrder(null);
+        toast.error("Invalid order data received");
+      }
+    } catch (err: any) {
+      console.error("Error fetching order:", err);
+      setOrder(null);
+      const errorMsg = err?.response?.data?.error || "Failed to load order details";
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -383,18 +400,43 @@ export default function OrderDetailsPage() {
                 <div className="flex items-center gap-3 border-b border-dashed pb-3">
                   <div className="bg-background p-2 rounded shadow-sm border"><IconCreditCard size={16} className="text-muted-foreground"/></div>
                   <div>
-                    <p className="font-bold text-foreground text-base">{order.customer?.name}</p>
-                    <p className="text-muted-foreground font-mono">{order.customer?.phone}</p>
+                    <p className="font-bold text-foreground text-base">{order.customer?.name || 'N/A'}</p>
+                    <p className="text-muted-foreground font-mono">
+                      {typeof order.address === 'object' && order.address?.phone 
+                        ? order.address.phone 
+                        : order.customer?.phone || 'N/A'}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 pt-1">
                   <div className="bg-background p-2 rounded shadow-sm border shrink-0 mt-0.5"><IconMapPin size={16} className="text-muted-foreground"/></div>
-                  <div className="text-muted-foreground leading-relaxed">
-                    <p>{order.address}</p>
-                    <p>{order.customer?.block}, {order.customer?.village}</p>
-                    <p className="font-medium text-foreground mt-1">
-                      {order.customer?.district}, {order.customer?.state} <span className="text-primary">{order.customer?.pincode}</span>
-                    </p>
+                  <div className="text-muted-foreground leading-relaxed space-y-1">
+                    {typeof order.address === 'object' && order.address ? (
+                      <>
+                        {order.address.location && <p className="text-foreground font-medium">{order.address.location}</p>}
+                        {order.address.city && <p>{order.address.city}</p>}
+                        {(order.address.state || order.address.pincode) && (
+                          <p className="font-medium text-foreground">
+                            {order.address.state || ''} {order.address.pincode && <span className="text-primary">{order.address.pincode}</span>}
+                          </p>
+                        )}
+                      </>
+                    ) : typeof order.address === 'string' && order.address ? (
+                      <>
+                        <p className="text-foreground font-medium whitespace-pre-wrap">{order.address}</p>
+                      </>
+                    ) : (
+                      <>
+                        {order.customer?.block || order.customer?.village ? (
+                          <p>{order.customer?.block}{order.customer?.block && order.customer?.village ? ', ' : ''}{order.customer?.village}</p>
+                        ) : null}
+                        {order.customer?.state || order.customer?.pincode ? (
+                          <p className="font-medium text-foreground">
+                            {order.customer?.state || ''} {order.customer?.pincode && <span className="text-primary">{order.customer?.pincode}</span>}
+                          </p>
+                        ) : null}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

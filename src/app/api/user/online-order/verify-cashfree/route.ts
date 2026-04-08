@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Cashfree, CFEnvironment } from "cashfree-pg";
-import { db, customerTable, onlineOrderTable, customerPaymentTable, itemTable, productTable } from "@/models/name";
+import { db, customerTable, onlineOrderTable, customerPaymentTable, itemTable, productTable, addressTable } from "@/models/name";
 import { tablesDB } from "@/models/server/config";
 import { ID } from "node-appwrite";
 
@@ -64,10 +64,30 @@ export async function POST(request: NextRequest) {
         if (paymentGroup === "upi") paymentTypeStr = "upi";
         else if (paymentGroup === "net_banking") paymentTypeStr = "netbanking";
 
+        // Fetch address details from address table
+        let addressData = addressID;
+        try {
+            if (addressID) {
+                const address = await tablesDB.getRow(db, addressTable, addressID);
+                if (address) {
+                    addressData = JSON.stringify({
+                        location: address.location,
+                        city: address.city,
+                        state: address.state,
+                        pincode: address.pincode,
+                        phone: address.phone
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Error fetching address:", err);
+            // Fall back to just the ID
+        }
+
         // Create the order in DB
         const onlineOrder = await tablesDB.createRow(db, onlineOrderTable, ID.unique(), {
             customerId,
-            address: addressID,
+            address: addressData,
             itemId,
             totalAmount: actualPaidAmount || 0,
             shipping_charge: shipping_charge || 0,
