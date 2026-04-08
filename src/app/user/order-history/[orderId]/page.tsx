@@ -223,7 +223,7 @@ export default function OrderDetailsPage() {
               {order.items.map((item) => (
                 <div key={item.$id} className="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 hover:bg-muted/10 transition-colors">
                   <div className="flex items-start sm:items-center gap-4 w-full">
-                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden bg-muted/30 border border-muted/50 flex-shrink-0">
+                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden bg-muted/30 border border-muted/50 shrink-0">
                       {item.imageUrl ? (
                         <Image
                           src={item.imageUrl}
@@ -276,7 +276,7 @@ export default function OrderDetailsPage() {
                   {order.awb && (
                     <div className="bg-background border rounded-lg p-3">
                       <p className="text-xs text-muted-foreground mb-1 font-semibold uppercase tracking-wider">AWB Number</p>
-                      <p className="font-mono font-bold text-foreground text-base tracking-wide bg-primary/10 text-primary w-max px-2 py-0.5 rounded">{order.awb}</p>
+                      <p className="font-mono font-bold text-base tracking-wide bg-primary/10 text-primary w-max px-2 py-0.5 rounded">{order.awb}</p>
                     </div>
                   )}
                   {order.shiprocketOrderId && (
@@ -297,7 +297,7 @@ export default function OrderDetailsPage() {
                       </span>
                       Live Tracking Updates
                     </h3>
-                    <div className="space-y-0 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
+                    <div className="space-y-0 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-linear-to-b before:from-transparent before:via-border before:to-transparent">
                       {Array.isArray(tracking) ? (
                         tracking.map((event: any, idx: number) => (
                           <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active py-4">

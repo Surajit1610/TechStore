@@ -1,247 +1,332 @@
 "use client"
 
-import React, { use } from 'react'
-import { useState, useEffect } from "react";
-import  { IconBrandShopee, IconUser, IconLogout, IconShoppingCart, IconSearch, IconHome, IconShoppingBag,
-   IconBuildingStore, IconSunFilled, IconMoon, IconHeart, IconWallet, IconBellFilled, IconMenu2, 
-   IconX} from "@tabler/icons-react";
+import React, { useState, useEffect } from 'react';
+import { 
+  IconUser, 
+  IconLogout, 
+  IconShoppingCart, 
+  IconHome, 
+  IconBuildingStore, 
+  IconSunFilled, 
+  IconMoon, 
+  IconHeart, 
+  IconBellFilled, 
+  IconMenu2, 
+  IconX,
+  IconInfoCircle
+} from "@tabler/icons-react";
 import Image from 'next/image';  
-import { useRouter } from 'next/navigation'; 
+import { useRouter, usePathname } from 'next/navigation'; 
 import { useAuthStore } from "@/store/Auth";
 import { useDataStore } from "@/store/Data";
 import ClickAwayListener from 'react-click-away-listener';
 import Link from "next/link";
-import { Icon } from 'lucide-react';
-import { usePathname } from 'next/navigation';
-
-
-
 
 function Navbar() {
-  const router = useRouter()
+  const router = useRouter();
   const pathname = usePathname();
   
-  // const [theme, setTheme] = useState("dark");
-  const {logout, user, theme, darkTheme, lightTheme} = useAuthStore()
-  const{userData, setUserData} = useDataStore()
+  const { logout, user, theme, darkTheme, lightTheme } = useAuthStore();
+  const { userData, setUserData } = useDataStore();
+  
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  useEffect(() => {
+    if (user) {
+      setUserData(user.$id);
+    }
+  }, [user, setUserData]);
 
   useEffect(() => {
-    if(user) {
-      setUserData(user.$id)
+    const html = document.querySelector('html');
+    if (html) {
+      html.classList.remove('dark', 'light');
+      html.classList.add(theme);
     }
-  }, [user])
+  }, [theme]);
 
+  const handleLogout = async () => {
+    await logout();
+    setIsDropdownOpen(false);
+  };
 
-  React.useEffect(()=>{
-    document.querySelector('html').classList.remove('dark', "light")
-    document.querySelector('html').classList.add(theme)
-  },[theme])
+  const closeSidebar = () => setIsSidebarOpen(false);
+  const closeDropdown = () => setIsDropdownOpen(false);
 
-  const handleLogout = async ()=>{
-    await logout()
-    setIsDropdownOpen(false)
-  }
+  const navLinks = [
+    { name: "Home", href: "/", icon: <IconHome size={20} /> },
+    { name: "Shop", href: "/shop", icon: <IconBuildingStore size={20} /> },
+    { name: "About", href: "/about", icon: <IconInfoCircle size={20} /> },
+  ];
 
-
-  
   return (
-    <div
-     className='bg-card/60 backdrop-blur-xl flex justify-between items-center gap-2 px-2 sm:px-4 py-2 border-b sticky top-0 z-50'
-    >
+    <>
+      <nav className="bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50 transition-colors duration-300">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            
+            {/* Left section: Mobile menu & Logo */}
+            <div className="flex items-center gap-3 sm:gap-6">
+              <button 
+                onClick={() => setIsSidebarOpen(true)}
+                className="sm:hidden p-2 -ml-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
+                aria-label="Open menu"
+              >
+                <IconMenu2 size={24} />
+              </button>
+              
+              <Link 
+                href="/" 
+                className="flex items-center gap-2 group cursor-pointer"
+              >
+                <span className="text-2xl font-black bg-linear-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent group-hover:from-green-500 group-hover:to-emerald-400 transition-all duration-300 tracking-tight">
+                  TechShop
+                </span>
+              </Link>
+
+              {user?.labels?.includes("owner") && (
+                <Link 
+                  href="/dashboard" 
+                  className="hidden md:flex items-center px-3 py-1.5 text-sm font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-full hover:bg-green-100 dark:hover:bg-green-900/50 transition-all active:scale-95"
+                >
+                  Dashboard
+                </Link>
+              )}
+            </div>
+
+            {/* Middle section: Desktop Links */}
+            <div className="hidden sm:flex items-center gap-8">
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link 
+                    key={link.name}
+                    href={link.href} 
+                    className={`relative font-medium text-sm transition-colors hover:text-green-600 dark:hover:text-green-400 ${
+                      isActive ? "text-green-600 dark:text-green-400" : "text-gray-600 dark:text-gray-300"
+                    }`}
+                  >
+                    {link.name}
+                    {isActive && (
+                      <span className="absolute -bottom-5 left-0 w-full h-0.5 bg-green-600 dark:bg-green-400 rounded-t-full" />
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Right section: Actions */}
+            <div className="flex items-center gap-3 sm:gap-5">
+              
+              {/* Notifications */}
+              {user && (
+                <button 
+                  onClick={() => router.push("/user/notification")} 
+                  className="relative p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none"
+                  aria-label="Notifications"
+                >
+                  <IconBellFilled size={22} className="hover:scale-110 transition-transform" />
+                  {user?.hasUnreadNotification && (
+                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 border-2 border-white dark:border-gray-950 rounded-full"></span>
+                  )}
+                </button>
+              )}
+
+              {/* Theme Toggles */}
+              <button 
+                onClick={theme === "dark" ? lightTheme : darkTheme}
+                className="hidden sm:flex p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none"
+                aria-label="Toggle theme"
+              >
+                {theme === "dark" ? (
+                  <IconSunFilled size={22} className="hover:scale-110 transition-transform text-amber-500" />
+                ) : (
+                  <IconMoon size={22} className="hover:scale-110 transition-transform text-indigo-500" />
+                )}
+              </button>
+
+              {!user && (
+                <button 
+                  onClick={theme === "dark" ? lightTheme : darkTheme}
+                  className="sm:hidden flex p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none"
+                  aria-label="Toggle theme"
+                >
+                  {theme === "dark" ? (
+                    <IconSunFilled size={22} className="text-amber-500" />
+                  ) : (
+                    <IconMoon size={22} className="text-indigo-500" />
+                  )}
+                </button>
+              )}
+
+              {/* User Menu or Login */}
+              {user ? (
+                <ClickAwayListener onClickAway={closeDropdown}>
+                  <div className="relative">
+                    <button 
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="relative block w-10 h-10 rounded-full overflow-hidden border-2 border-transparent hover:border-green-500 dark:hover:border-green-400 focus:outline-none focus:border-green-500 transition-all active:scale-95 shadow-sm"
+                    >
+                      <Image
+                        src={userData?.avatar || "/user.png"}
+                        alt="User avatar"
+                        fill
+                        className="object-cover"
+                      />
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {isDropdownOpen && (
+                      <div className="absolute right-0 mt-3 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl py-2 z-50 transform opacity-100 scale-100 transition-all origin-top-right">
+                        
+                        <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 mb-2">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user?.name || "User"}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+                        </div>
+
+                        <Link
+                          href="/user"
+                          onClick={closeDropdown}
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          <IconUser size={18} />
+                          Profile
+                        </Link>
+
+                        <Link
+                          href="/user/cart"
+                          onClick={closeDropdown}
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          <IconShoppingCart size={18} />
+                          Cart
+                        </Link>
+                        
+                        <Link
+                          href="/user/liked"
+                          onClick={closeDropdown}
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          <IconHeart size={18} />
+                          Liked
+                        </Link>
+
+                        <button
+                          onClick={theme === "dark" ? lightTheme : darkTheme}
+                          className="sm:hidden flex items-center gap-3 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          {theme === "dark" ? (
+                            <><IconSunFilled size={18} className="text-amber-500" /> Light Mode</>
+                          ) : (
+                            <><IconMoon size={18} className="text-indigo-500" /> Dark Mode</>
+                          )}
+                        </button>
+
+                        <div className="border-t border-gray-100 dark:border-gray-800 mt-2 pt-2">
+                          <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-3 w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                          >
+                            <IconLogout size={18} />
+                            Logout
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </ClickAwayListener>
+              ) : (
+                <button
+                  onClick={() => router.push("/login")}
+                  className="px-5 py-2 text-sm font-semibold text-white bg-green-600 rounded-full hover:bg-green-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-900"
+                >
+                  Login
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </nav>
+
       {/* Sidebar Overlay */}
       <div 
-        className={`fixed inset-0 bg-black/50 backdrop-blur-md z-40 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
-        onClick={() => setIsSidebarOpen(false)}
+        className={`fixed inset-0 bg-gray-900/60 dark:bg-black/60 backdrop-blur-sm z-60 transition-all duration-300 ease-in-out ${
+          isSidebarOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+        }`}
+        onClick={closeSidebar}
       />
 
       {/* Sidebar */}
-      <ClickAwayListener onClickAway={() => isSidebarOpen && setIsSidebarOpen(false)}>
-        <div className={`fixed top-0 left-0 h-screen w-64 bg-card shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <div className='flex flex-col h-full'>
-            <div className='flex items-center justify-between p-4 border-b border-border/50'>            
-              <div className='flex items-center gap-2'>
-                <p className='text-2xl font-bold text-green-600 tracking-tight'>TechShop</p>
-              </div>  
-              <button 
-                onClick={() => setIsSidebarOpen(false)} 
-                className='p-2 rounded-full hover:bg-muted transition-colors active:scale-95'
+      <div 
+        className={`fixed top-0 left-0 h-full w-70 bg-white dark:bg-gray-950 shadow-2xl z-70 transform transition-transform duration-300 ease-in-out ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex flex-col h-full">
+          <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800">            
+            <span className="text-2xl font-black bg-linear-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent">
+              TechShop
+            </span>
+            <button 
+              onClick={closeSidebar} 
+              className="p-2 rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none"
+              aria-label="Close menu"
+            >
+              <IconX size={24} />
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link 
+                  key={link.name}
+                  href={link.href} 
+                  onClick={closeSidebar} 
+                  className={`flex items-center gap-4 px-4 py-3.5 rounded-xl font-medium transition-colors ${
+                    isActive 
+                      ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400" 
+                      : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900"
+                  }`}
+                >
+                  {link.icon}
+                  {link.name}
+                </Link>
+              );
+            })}
+            
+            {user?.labels?.includes("owner") && (
+              <Link 
+                href="/dashboard" 
+                onClick={closeSidebar} 
+                className={`flex md:hidden items-center gap-4 px-4 py-3.5 rounded-xl font-medium transition-colors ${
+                  pathname === "/dashboard" 
+                    ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400" 
+                    : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900"
+                }`}
               >
-                <IconX size={20} />
+                <IconBuildingStore size={20} />
+                Dashboard
+              </Link>
+            )}
+          </div>
+
+          {!user && (
+            <div className="p-4 border-t border-gray-100 dark:border-gray-800">
+              <button
+                onClick={() => { closeSidebar(); router.push("/login"); }}
+                className="w-full py-3 text-sm font-semibold text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors"
+              >
+                Login
               </button>
             </div>
-            
-            <div className='flex flex-col gap-2 p-4 font-medium'>
-              <Link href="/" onClick={() => setIsSidebarOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${pathname === "/" ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-500" : "hover:bg-muted hover:translate-x-1"}`}>
-                <IconHome size={20} />
-                Home
-              </Link>
-              <Link href="/shop" onClick={() => setIsSidebarOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${pathname === "/shop" ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-500" : "hover:bg-muted hover:translate-x-1"}`}>
-                <IconBuildingStore size={20} />
-                Shop
-              </Link>
-              <Link href="/about" onClick={() => setIsSidebarOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${pathname === "/about" ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-500" : "hover:bg-muted hover:translate-x-1"}`}>
-                <IconUser size={20} />
-                About
-              </Link>
-            </div>
-          </div>
+          )}
         </div>
-      </ClickAwayListener>
-      <div className='flex items-center gap-2 sm:gap-4'>
-        <div
-         onClick={() => router.push("/")}
-         className="hidden sm:flex relative cursor-pointer text-2xl font-bold text-green-600 items-center gap-1">
-          TechShop
-        </div>
-        <div 
-          onClick={() => setIsSidebarOpen(true)}
-          className='flex sm:hidden hover:bg-green-200 dark:hover:bg-green-950 active:scale-95 active:bg-green-300 active:dark:bg-green-950 p-1 rounded transition cursor-pointer'>
-          <IconMenu2 />
-        </div>
-        {user && (user.labels.includes("owner") ) &&
-        <button onClick={()=> router.push("/dashboard")} className=' border-2 border-green-700 rounded-full px-2 py-1 cursor-pointer active:scale-95'>
-          <div className='font-semibold'>Dashboard</div>
-        </button>
-        }
       </div>
-      
-      <div className="hidden sm:flex items-center gap-4 lg:gap-8 font-semibold">
-        <Link href="/" className={`hover:text-green-500 transition ${pathname === "/" ? "text-green-600" : ""}`}>
-          Home
-        </Link>
-        <Link href="/shop" className={`hover:text-green-500 transition ${pathname === "/shop" ? "text-green-600" : ""}`}>
-          Shop
-        </Link>
-        <Link href="/about" className={`hover:text-green-500 transition ${pathname === "/about" ? "text-green-600" : ""}`}>
-          About
-        </Link>
-      </div>
-
-      <div className='flex gap-3 items-center'>
-       
-        {user&&
-          <div onClick={()=> router.push("/user/notification")} className='cursor-pointer hover:scale-110 active:scale-95 relative'>
-            <IconBellFilled/>
-            {user?.hasUnreadNotification &&
-              <div className='bg-red-500 h-2.5 w-2.5 rounded-full absolute top-0.5 right-0'></div>
-            }
-          </div>
-        }  
-        {theme === "dark" ? (
-          <IconSunFilled className="hidden sm:flex cursor-pointer hover:scale-110 active:scale-95" onClick={lightTheme} />
-        ) : (
-          <IconMoon className="hidden sm:flex cursor-pointer hover:scale-110 active:scale-95" onClick={darkTheme} />
-        )}
-        {!user && 
-          <div>
-            {theme === "dark" ? (
-              <IconSunFilled className="flex sm:hidden cursor-pointer hover:scale-110 active:scale-95" onClick={lightTheme} />
-            ) : (
-              <IconMoon className="flex sm:hidden cursor-pointer hover:scale-110 active:scale-95" onClick={darkTheme} />
-            )}
-          </div>
-        }
-
-        
-        {user ? (
-          <div>
-            <div 
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="w-9 h-9 rounded-full overflow-hidden relative cursor-pointer border-2 active:scale-95">
-              {userData?.avatar ? (
-                <Image
-                  src={userData.avatar}
-                  alt="avatar"
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <Image
-                  src="/user.png"
-                  alt="avatar"
-                  fill
-                  className="object-cover"
-                />
-              )}
-            </div>  
-            {isDropdownOpen && (
-              <ClickAwayListener onClickAway={() => setIsDropdownOpen(false)}>
-                <div className='absolute right-0 mt-2 w-30 bg-white dark:bg-black border
-                 border-gray-700 rounded-md shadow-lg p-1 z-30'>
-                  
-                  <Link
-                    href="/user"
-                    onClick={() => setIsDropdownOpen(false)}
-                    className="flex items-center gap-2 w-full text-left border-b
-                    px-4 py-2 hover:bg-green-100 dark:hover:bg-gray-800 cursor-pointer"
-                  >
-                    <IconUser/>
-                    Profile
-                  </Link>
-
-
-                  <Link
-                    href="/user/cart"
-                    onClick={() => setIsDropdownOpen(false)}
-                    className="flex items-center gap-2 w-full text-left border-b
-                    px-4 py-2 hover:bg-green-100 dark:hover:bg-gray-800"
-                  >
-                    <IconShoppingCart/>
-                    Cart
-                  </Link>
-                  
-                  <Link
-                    href="/user/liked"
-                    onClick={() => setIsDropdownOpen(false)}
-                    className="flex items-center gap-2 w-full text-left border-b
-                    px-4 py-2 hover:bg-green-100 dark:hover:bg-gray-800"
-                  >
-                    <IconHeart/>
-                    Liked
-                  </Link>
-
-                  {theme==="dark" ? <button
-                    onClick={lightTheme}
-                    className="flex sm:hidden items-center gap-2 w-full text-left border-b
-                      px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-                    >
-                      <IconSunFilled/>
-                      Light
-                    </button>
-                    : <button
-                        onClick={darkTheme}
-                        className="flex sm:hidden items-center gap-2 w-full text-left border-b
-                        px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      >
-                        <IconMoon/>
-                        Dark
-                  </button>}
-
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 w-full text-left cursor-pointer
-                    px-4 py-2 hover:bg-green-100 dark:hover:bg-gray-800"
-                  >
-                    <IconLogout/>
-                    Logout
-                  </button>
-                </div>
-              </ClickAwayListener>          
-            )}
-          </div>
-        ) : (
-          <button
-            onClick={() => router.push("/login")}
-            className='px-2.5 py-1 text-white font-semibold bg-green-700 rounded-full border hover:bg-green-800 active:scale-95 cursor-pointer'>
-            Login
-          </button>
-        )}
-      </div>
-    </div>
-  )
+    </>
+  );
 }
 
-export default Navbar
+export default Navbar;
