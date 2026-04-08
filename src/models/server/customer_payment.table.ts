@@ -11,7 +11,7 @@ export default async function createCustomerPaymentTable(){
     await Promise.all([
         tablesDB.createFloatColumn(db, customerPaymentTable, "amount", true, 0.00),
         tablesDB.createStringColumn(db, customerPaymentTable, "customerId", 1000, true),
-        tablesDB.createStringColumn(db, customerPaymentTable, "transitionId", 1000, true),               
+        tablesDB.createStringColumn(db, customerPaymentTable, "transactionId", 1000, true),               
     ])
     console.log("Customer payment column is created");
     

@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         const paymentRecord = await tablesDB.createRow(db, customerPaymentTable, ID.unique(), {
             amount: actualPaidAmount,
             customerId: customerId,
-            transitionId: String(successfulPayment.cf_payment_id)
+            transactionId: String(successfulPayment.cf_payment_id)
         });
 
         // Clear customer cart and update order/payment history
