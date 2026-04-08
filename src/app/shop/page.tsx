@@ -414,7 +414,7 @@ export default function Shop() {
       />
 
       {/* Mobile Category Sidebar */}
-      <div className={`fixed top-0 left-0 h-full w-[280px] bg-card shadow-2xl z-50 transform transition-transform duration-300 ease-out md:hidden flex flex-col ${isCategoryBarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className={`fixed top-0 left-0 h-full w-70 bg-card shadow-2xl z-50 transform transition-transform duration-300 ease-out md:hidden flex flex-col ${isCategoryBarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className='p-4 border-b flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20'>
             <div className="flex items-center gap-2">
                 <div className="p-2 bg-blue-100 text-blue-600 rounded-lg dark:bg-blue-900/30 dark:text-blue-400">

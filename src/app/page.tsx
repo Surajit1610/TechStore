@@ -68,6 +68,34 @@ export default function Page() {
   const [featuredProductSections, setFeaturedProductSections] = useState<{ $id: string; title: string; productIds: string[] }[]>([]);
   const [featuredProductSectionsLoading, setFeaturedProductSectionsLoading] = useState(true);
 
+  // Swipe handling states
+  const [touchStart, setTouchStart] = useState(0)
+  const [touchEnd, setTouchEnd] = useState(0)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > 50
+    const isRightSwipe = distance < -50
+    if (isLeftSwipe) {
+      nextSlide()
+    }
+    if (isRightSwipe) {
+      prevSlide()
+    }
+    // reset
+    setTouchStart(0)
+    setTouchEnd(0)
+  }
+
   const featuredCategories = categories?.rows?.slice(0, 8) || []
 
   const retry = async (fn: () => Promise<any>, retries = 3, delay = 1000) => {
@@ -228,7 +256,12 @@ export default function Page() {
         {/* Carousel Section */}
         {slidersLoading ? <CarouselSkeleton /> : (
             <section className='relative w-full h-[30vh] sm:h-[40vh] md:h-[50vh] lg:h-[60vh] xl:h-[70vh] flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-black'>
-            <div className='relative w-full h-full group'>
+            <div 
+              className='relative w-full h-full group touch-pan-y'
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
                 {sliders?.rows?.length > 0 && (
                 <>
                     {sliders.rows.map((slide: any, index: number) => {
@@ -246,7 +279,7 @@ export default function Page() {
                             loading={index === 0 ? "eager" : "lazy"}
                         />
                         {/* Optional subtle gradient overlay for text readability if needed */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
+                        <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent pointer-events-none"></div>
                         </div>
                     )
                     })}

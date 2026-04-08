@@ -327,7 +327,7 @@ export default function CartPage() {
 					</div>
 
 					{/* Order Summary Section */}
-					<div className="w-full lg:w-[420px] shrink-0">
+					<div className="w-full lg:w-105 shrink-0">
 						<div className="p-6 border rounded-2xl bg-card shadow-sm sticky top-24 space-y-8">
 							<h2 className="text-2xl font-bold border-b pb-4">Order Summary</h2>
 							
@@ -339,7 +339,7 @@ export default function CartPage() {
 							<div className="border-t pt-6">
 								<h3 className="font-semibold mb-4 flex items-center gap-2 text-lg"><IconMapPin size={20} className="text-blue-500"/> Shipping Address</h3>
 								{addresses.length > 0 ? (
-									<div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+									<div className="space-y-3 max-h-75 overflow-y-auto pr-2 custom-scrollbar">
 										{addresses.map((address) => (
 											<label key={address.$id} className={`flex items-start gap-4 p-4 border rounded-xl cursor-pointer transition-all hover:shadow-md ${selectedAddress === address.$id ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/10 ring-1 ring-blue-500' : 'hover:border-gray-400'}`}>
 												<input

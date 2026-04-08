@@ -476,47 +476,39 @@ export default function ProductPage() {
           <div className="lg:col-span-5 flex flex-col gap-6">
             <div className="bg-card rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-800">
               
-              <div className="flex justify-between items-start gap-4 mb-4">
-                  <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white leading-tight">
+              <div className="mb-4">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white leading-tight">
                     {product.productName}
                   </h1>
-                  <div className="flex items-center gap-2 shrink-0">
-                      <button 
-                        onClick={() => handleShare()} 
-                        className='p-2.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800/50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-xl transition-all active:scale-95'
-                        aria-label="Share product"
-                      >
-                          <IconShare size={20} stroke={1.5} />
-                      </button>
-                      <button 
-                        onClick={() => { isLiked ? removeFromLiked(user!.$id, product.$id) : addToLiked(user!.$id, product.$id) }} 
-                        className={`p-2.5 rounded-xl transition-all active:scale-95 ${isLiked ? 'bg-red-50 text-red-500 dark:bg-red-900/20' : 'bg-gray-50 hover:bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:hover:bg-gray-800 dark:text-gray-300'}`}
-                        aria-label="Toggle wishlist"
-                      >
-                          {isLiked ? <IconHeartFilled size={20} /> : <IconHeart size={20} stroke={1.5} />}
-                      </button>
-                  </div>
               </div>
 
-              <div className="flex flex-wrap items-end gap-3 mb-8">
-                <span className="text-4xl font-black text-gray-900 dark:text-white">₹{product.finalPrice}</span>
-                {product.price > product.finalPrice && (
-                    <>
-                        <span className='text-xl font-medium line-through text-gray-400'>₹{product.price}</span>
-                        <span className='text-sm font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-lg mb-1'>You save ₹{product.price - product.finalPrice}</span>
-                    </>
-                )}
-              </div>
-
-              <div className="space-y-4 pt-6 border-t border-gray-100 dark:border-gray-800 mb-8">
-                  <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400 text-sm">
-                      <IconTruck size={20} stroke={1.5} className="text-blue-500" />
-                      <span>Free delivery on orders over ₹500</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400 text-sm">
-                      <IconShieldCheck size={20} stroke={1.5} className="text-blue-500" />
-                      <span>7-day return policy</span>
-                  </div>
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+                <div className="flex flex-wrap items-end gap-3">
+                  <span className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">₹{product.finalPrice}</span>
+                  {product.price > product.finalPrice && (
+                      <>
+                          <span className='text-lg sm:text-xl font-medium line-through text-gray-400'>₹{product.price}</span>
+                          <span className='text-xs sm:text-sm font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-lg mb-1'>You save ₹{product.price - product.finalPrice}</span>
+                      </>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-2 shrink-0">
+                    <button 
+                      onClick={() => handleShare()} 
+                      className='p-2.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800/50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-xl transition-all active:scale-95'
+                      aria-label="Share product"
+                    >
+                        <IconShare size={20} stroke={1.5} />
+                    </button>
+                    <button 
+                      onClick={() => { isLiked ? removeFromLiked(user!.$id, product.$id) : addToLiked(user!.$id, product.$id) }} 
+                      className={`p-2.5 rounded-xl transition-all active:scale-95 ${isLiked ? 'bg-red-50 text-red-500 dark:bg-red-900/20' : 'bg-gray-50 hover:bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:hover:bg-gray-800 dark:text-gray-300'}`}
+                      aria-label="Toggle wishlist"
+                    >
+                        {isLiked ? <IconHeartFilled size={20} /> : <IconHeart size={20} stroke={1.5} />}
+                    </button>
+                </div>
               </div>
 
               <div className="flex flex-col gap-4">
@@ -560,7 +552,7 @@ export default function ProductPage() {
                         Shipping Address
                     </h3>
                     {addresses.length > 0 ? (
-                        <div className="space-y-3 max-h-[240px] overflow-y-auto custom-scrollbar pr-2">
+                        <div className="space-y-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
                             {addresses.map((address) => (
                                 <label key={address.$id} className={`flex items-start gap-4 border p-4 rounded-2xl cursor-pointer transition-all ${selectedAddress === address.$id ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/10 ring-1 ring-blue-500 shadow-sm' : 'hover:border-gray-300 bg-gray-50/30 dark:bg-gray-800/20'}`}>
                                     <input

@@ -190,7 +190,7 @@ export function Uploder(){
    <div className="flex flex-col justify-center items-center w-full ">
     <Card
       className={cn(
-          "relative border-2 border-dashed transition-colors duration-200 ease-in-out w-full sm:w-150 2xl:w-340 xl:w-280  lg:w-210 md:w-170 h-64 shadow-xl",
+          "relative border-2 border-dashed transition-colors duration-200 ease-in-out w-full h-64 shadow-xl",
           isDragActive
             ? "border-primary bg-primary/10 border-solid"
             : "border-border hover:border-primary"
@@ -214,7 +214,7 @@ export function Uploder(){
     </Card>
 
     {files.length > 0 && (
-        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 w-full sm:w-150 2xl:w-340 xl:w-280  lg:w-210 md:w-170">
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 w-full">
           {files.map(
             ({
               id,
