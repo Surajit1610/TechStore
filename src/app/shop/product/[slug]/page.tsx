@@ -181,9 +181,8 @@ export default function ProductPage() {
 
   const addToCart = () => {
     if (!product) return
-    if (!userData?.$id) {
+    if (!user || !userData) {
         toast.error("Please login to add to cart")
-        router.push("/login")
         return
     }
     try {
@@ -264,9 +263,8 @@ export default function ProductPage() {
   };
 
   const handleOrderNow = () => {
-    if (!userData || !userData.$id) {
+    if (!user || !userData) {
         toast.error("Please login to place an order");
-        router.push("/login");
         return;
     }
     setShowDirectCheckout(true);
@@ -502,7 +500,13 @@ export default function ProductPage() {
                         <IconShare size={20} stroke={1.5} />
                     </button>
                     <button 
-                      onClick={() => { isLiked ? removeFromLiked(user!.$id, product.$id) : addToLiked(user!.$id, product.$id) }} 
+                      onClick={() => { 
+                        if (!user || !userData) {
+                          toast.error("Please login to add to wishlist");
+                          return;
+                        }
+                        isLiked ? removeFromLiked(user.$id, product.$id) : addToLiked(user.$id, product.$id) 
+                      }} 
                       className={`p-2.5 rounded-xl transition-all active:scale-95 ${isLiked ? 'bg-red-50 text-red-500 dark:bg-red-900/20' : 'bg-gray-50 hover:bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:hover:bg-gray-800 dark:text-gray-300'}`}
                       aria-label="Toggle wishlist"
                     >
