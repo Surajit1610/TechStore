@@ -188,7 +188,7 @@ export default function ProductPage() {
     try {
         const res = axios.post("/api/user/cart/add", {customerID: userData?.$id, productID: product.$id, productName: product.productName, slug: product.slug, price: product.finalPrice, qty: qty})
         res.then(()=> {
-          toast.success(`${qty} x ${product?.productName} added to cart`)
+          toast.success(`${qty} x product added to cart`)
           if(user) setUserData(user.$id)
         })
         .catch(err=>{

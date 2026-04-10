@@ -16,6 +16,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Customer not found" }, { status: 404 });
     }
 
+    if (customer.cartId && customer.cartId.length > 0) {
+      const promises = customer.cartId.map((id: string) => tablesDB.getRow(db, itemTable, id).catch(() => null));
+      const cartItems = await Promise.all(promises);
+      
+      const existingItem = cartItems.find((item: any) => item && item.productId === productID);
+
+      if (existingItem) {
+        const newQuantity = existingItem.quantity + qty;
+        await tablesDB.updateRow(db, itemTable, existingItem.$id, { quantity: newQuantity });
+        
+        return NextResponse.json({ success: true, message: "Item quantity updated in cart" });
+      }
+    }
+
     const item = await tablesDB.createRow(db, itemTable, ID.unique(), {
       productId: productID,
       productName,

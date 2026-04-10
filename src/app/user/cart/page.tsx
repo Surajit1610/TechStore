@@ -295,7 +295,7 @@ export default function CartPage() {
 							return (
 								<div key={it.$id} className="p-4 border rounded-2xl bg-card shadow-sm hover:shadow-md transition-all flex sm:gap-6 gap-4 items-center sm:flex-row flex-col">
 									{imgSrc ? (
-										<a href={`/shop/product/${it.productId}`} className="w-28 h-28 shrink-0 overflow-hidden rounded-xl border bg-gray-50 dark:bg-gray-800/50">
+										<a href={`/shop/product/${product?.slug || it.productId}`} className="w-28 h-28 shrink-0 overflow-hidden rounded-xl border bg-gray-50 dark:bg-gray-800/50">
 											<img src={imgSrc} alt={it.productName} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
 										</a>
 									) : (
@@ -303,7 +303,7 @@ export default function CartPage() {
 									)}
 									<div className="flex-1 flex flex-col sm:flex-row justify-between w-full gap-4">
 										<div className="flex-1 space-y-2">
-											<a href={`/shop/product/${it.productId}`} className="font-semibold text-lg text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 line-clamp-2 transition-colors">
+											<a href={`/shop/product/${product?.slug || it.productId}`} className="font-semibold text-lg text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 line-clamp-2 transition-colors">
 												{it.productName}
 											</a>
 											<p className="text-sm text-gray-500 font-medium">₹{Number(it.price).toFixed(2)}</p>
