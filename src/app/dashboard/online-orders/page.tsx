@@ -624,7 +624,7 @@ export default function OnlineOrdersPage() {
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="bg-muted/30 border-t px-6 py-4 gap-3 justify-end rounded-b-xl">
+            <CardFooter className="flex flex-col-reverse sm:flex-row bg-muted/30 border-t px-6 py-4 gap-3 sm:justify-end rounded-b-xl">
               <Button
                 variant="outline"
                 onClick={() => setShowShipmentModal(false)}

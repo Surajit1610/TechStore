@@ -14,7 +14,7 @@ import { useDataStore } from '@/store/Data'
 import { Skeleton } from '@/components/ui/skeleton'
 
 const CarouselSkeleton = () => (
-  <div className='relative w-full h-[30vh] sm:h-[40vh] md:h-[50vh] lg:h-[60vh] xl:h-[70vh] bg-gray-100 dark:bg-gray-800 animate-pulse'>
+  <div className='relative w-full h-[20vh] sm:h-[30vh] md:h-[40vh] lg:h-[50vh] xl:h-[65vh] bg-gray-100 dark:bg-gray-800 animate-pulse'>
   </div>
 );
 
@@ -255,7 +255,7 @@ export default function Page() {
         
         {/* Carousel Section */}
         {slidersLoading ? <CarouselSkeleton /> : (
-            <section className='relative w-full h-[30vh] sm:h-[40vh] md:h-[50vh] lg:h-[60vh] xl:h-[70vh] flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-black'>
+            <section className='relative w-full h-[20vh] sm:h-[30vh] md:h-[40vh] lg:h-[50vh] xl:h-[65vh] flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-black'>
             <div 
               className='relative w-full h-full group touch-pan-y'
               onTouchStart={handleTouchStart}
