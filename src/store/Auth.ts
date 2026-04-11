@@ -20,7 +20,7 @@ interface IAuthStore {
   darkTheme(): void
   lightTheme(): void
   setHydrated(): void;
-  verfiySession(): Promise<void>;
+  verifySession(): Promise<void>;
   login(
     email: string,
     password: string
@@ -70,11 +70,17 @@ export const useAuthStore = create<IAuthStore>()(
         set({hydrated: true})
       },
 
-      async verfiySession() {
+      async verifySession() {
         try {
           const session = await account.getSession("current")
-          set({session})
-
+          const [user, {jwt}] = await Promise.all([
+            account.get<UserPrefs>(),
+            account.createJWT()
+          ])
+          if (!user.prefs?.orders) await account.updatePrefs<UserPrefs>({
+            orders: 0
+          })
+          set({session, user, jwt})
         } catch (error) {
           console.log(error)
         }
@@ -164,6 +170,7 @@ export const useAuthStore = create<IAuthStore>()(
     })),
     {
       name: "auth",
+      partialize: (state) => ({ session: state.session, user: state.user, theme: state.theme, hydrated: state.hydrated }),
       onRehydrateStorage(){
         return (state, error) => {
           if (!error) state?.setHydrated()

@@ -69,7 +69,7 @@ export default function Login() {
       toast.success("Reset link has been sent")
     } catch (error) {
       console.error(error)
-      setError("User doesn't exits with this email")
+      setError("Failed to send reset link. Please check your email and try again.")
     }
   }
 

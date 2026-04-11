@@ -57,30 +57,33 @@ export default function Register() {
         if (response.error) {
             setError(() => response.error!.message);
         } else {
-          console.log(response);
-          
-          const ID = response.userData.$id
-              const name = fullname
-              // console.log(ID);
-              // console.log(name)
-              // 
-              
-              const avatar = avatars.getInitials({
-                name: fullname,
-                width: 100,
-                height: 100,
-                background: "148F24",
-              })
-              console.log(avatar);;
-              
+            try {
+                const ID = response.userData.$id
+                const name = fullname
+                // console.log(ID);
+                // console.log(name)
+                // 
+                
+                const avatar = avatars.getInitials({
+                  name: fullname,
+                  width: 100,
+                  height: 100,
+                  background: "148F24",
+                })
+                console.log(avatar);;
+                
 
-              const userResponse = await axios.post("/api/user/register", {ID, name, email, avatar})
-              console.log(userResponse.data);
+                const userResponse = await axios.post("/api/user/register", {ID, name, email, avatar})
+                console.log(userResponse.data);
            
-            const loginResponse = await login(email.toString(), password.toString());
+                const loginResponse = await login(email.toString(), password.toString());
         
-            if (loginResponse.error) {
-                setError(() => loginResponse.error!.message);
+                if (loginResponse.error) {
+                    setError(() => loginResponse.error!.message);
+                }
+            } catch (apiError) {
+                console.error("API error:", apiError);
+                setError(() => "Failed to complete registration. Please try again.");
             }
         }
 
