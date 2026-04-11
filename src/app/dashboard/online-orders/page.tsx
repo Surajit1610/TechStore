@@ -122,7 +122,7 @@ export default function OnlineOrdersPage() {
     const fetchShiprocketToken = async () => {
       try {
         const res = await axios.post("/api/company/shiprocket-auth");
-        setShiprocketToken(res.data.token);
+        setShiprocketToken((res.data as any).token);
         console.log("Shiprocket token obtained");
       } catch (err) {
         console.error("Failed to get Shiprocket token:", err);
@@ -139,8 +139,8 @@ export default function OnlineOrdersPage() {
     try {
       const query = status === "all" ? "" : `&status=${status}`;
       const res = await axios.get(`/api/company/online-orders?page=${page}&limit=20${query}`);
-      setOrders(res.data.orders);
-      setTotalPages(res.data.totalPages);
+      setOrders((res.data as any).orders);
+      setTotalPages((res.data as any).totalPages);
       setCurrentPage(page);
     } catch (err) {
       console.error("Failed to fetch orders:", err);
@@ -212,14 +212,14 @@ export default function OnlineOrdersPage() {
         order: shipmentData,
       });
 
-      if (res.data.success) {
+      if ((res.data as any).success) {
         toast.success("Shipment created successfully!");
 
         // Update order status
         await axios.patch(`/api/company/online-orders`, {
           orderId: selectedOrder.$id,
           status: "processing",
-          shiprocketOrderId: `${res.data.order_id}`,
+          shiprocketOrderId: `${(res.data as any).order_id}`,
         });
 
         // Refresh orders
