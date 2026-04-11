@@ -21,6 +21,7 @@ import { useAuthStore } from "@/store/Auth";
 import { useDataStore } from "@/store/Data";
 import ClickAwayListener from 'react-click-away-listener';
 import Link from "next/link";
+import { toast } from 'react-toastify'
 
 function Navbar() {
   const router = useRouter();
@@ -49,6 +50,8 @@ function Navbar() {
   const handleLogout = async () => {
     await logout();
     setIsDropdownOpen(false);
+    toast.success('Logged out successfully')
+        router.push('/')
   };
 
   const closeSidebar = () => setIsSidebarOpen(false);

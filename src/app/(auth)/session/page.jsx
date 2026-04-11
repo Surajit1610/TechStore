@@ -7,10 +7,6 @@ import { LoaderOne } from '@/components/ui/loader';
 import { account, avatars} from '@/models/client/config';
 import axios from 'axios';
 
-import { userTable, db } from "@/models/name";
-import { tablesDB, users } from "@/models/server/config";
-
-
 function setSession() {
     let {setSession} = useAuthStore()
 
