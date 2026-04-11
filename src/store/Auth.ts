@@ -159,6 +159,7 @@ export const useAuthStore = create<IAuthStore>()(
           
         } catch (error) {
           console.log(error)
+          set({session: null, jwt: null, user: null})
         }
       },
     })),
