@@ -38,7 +38,7 @@ export async function generateMetadata(
         openGraph: {
           title: `${product.productName} | TechStore`,
           description: cleanDescription || defaultDesc,
-          images: productImages.map((url: string) => ({ url })),
+          images: productImages.slice(0, 1).map((url: string) => ({ url })),
         },
       }
     }
