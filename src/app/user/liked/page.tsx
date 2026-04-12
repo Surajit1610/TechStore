@@ -82,7 +82,7 @@ const LikedProducts = () => {
       const res = axios.post("/api/user/cart/add", {customerID: user!.$id, productID: item.$id, productName: item.productName, slug: item.slug, price: item.finalPrice, qty: 1})
       res.then(response=> {
         console.log(response.data);
-        toast.success(`${item?.productName} added to cart`)
+        toast.success(`Product added to cart`)
         if (userData) setUserData(user!.$id) // update cart badge immediately
       })
       .catch(err=>{
@@ -167,14 +167,14 @@ const LikedProducts = () => {
               </div>
             </div>
             
-            <div className='flex gap-2 mt-3 z-10 relative'>
+            <div className='flex items-center gap-2 mt-3 z-10 relative'>
               {/* Mobile cart button */}
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
                   addToCart(item)
                 }} 
-                className='sm:hidden flex-1 py-2 bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rounded-xl flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-colors'
+                className='sm:hidden flex-1 h-10 bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rounded-xl flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-colors'
               >
                 <IconShoppingCart size={18} /> <span className='text-sm font-medium'>Add</span>
               </button>
@@ -184,7 +184,7 @@ const LikedProducts = () => {
                   e.stopPropagation();
                   removeItem(item.$id);
                 }} 
-                className='px-3 py-2 border rounded-xl text-red-500 hover:bg-red-50 hover:border-red-200 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:border-red-900/50 transition-colors active:scale-95 flex-1 sm:flex-none flex justify-center items-center'
+                className='h-10 w-12 sm:w-full border rounded-xl text-red-500 hover:bg-red-50 hover:border-red-200 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:border-red-900/50 transition-colors active:scale-95 flex-shrink-0 flex justify-center items-center'
                 title="Remove from wishlist"
               >
                 <IconTrash size={18} />
