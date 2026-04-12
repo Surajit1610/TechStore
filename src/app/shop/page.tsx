@@ -5,12 +5,14 @@
 
 import { IconChevronDown, IconChevronUp, IconMenu2, IconX, IconHeart, IconShoppingCart, IconSearch, IconCategory, IconPackageOff } from '@tabler/icons-react'
 import axios from 'axios'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import React, { useEffect, useState, use, Suspense } from 'react'
 import { toast } from 'react-toastify'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuthStore } from '@/store/Auth'
 import { useDataStore } from '@/store/Data'
+
+export const dynamic = 'force-dynamic'
 
 // SKELETON for Products
 const ProductsSkeleton = () => (
@@ -154,7 +156,7 @@ function ProductList({ productsPromise, productSearch, router, userData, user, o
 
 // Category List Component
 function CategoryList({
-    categoriesPromise,
+    categoriesData,
     categorySearch,
     activeCatOrSubcatId,
     activeCategoryId,
@@ -165,7 +167,7 @@ function CategoryList({
     getProductsBySubcategory,
     onCategorySelect
 }: {
-    categoriesPromise: Promise<any>,
+    categoriesData: any,
     categorySearch: string,
     activeCatOrSubcatId: string,
     activeCategoryId: string,
@@ -176,7 +178,6 @@ function CategoryList({
     getProductsBySubcategory: (subcategoryName: string, id: string) => void,
     onCategorySelect?: () => void
 }) {
-    const categoriesData = use(categoriesPromise);
     const categories = categoriesData.data;
     
     const [categoryCurrentPage, setCategoryCurrentPage] = useState(1);
@@ -303,7 +304,10 @@ export default function Shop() {
   const { user } = useAuthStore();
   const { userData, setUserData } = useDataStore();
 
-  const [categoriesPromise, setCategoriesPromise] = useState<Promise<any> | null>(null);
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams.get('category');
+
+  const [categories, setCategories] = useState<any>({data: {rows: []}});
   const [productsPromise, setProductsPromise] = useState<Promise<any> | null>(null);
   
   const [subcategoriesData, setSubcategoriesData] = useState<any[]>([]);
@@ -315,13 +319,30 @@ export default function Shop() {
   const [productSearch, setProductSearch] = useState("");
 
   const [isCategoryBarOpen, setIsCategoryBarOpen] = useState(false)
+  const [initialCategory, setInitialCategory] = useState<string>('');
 
   const router = useRouter();
  
   useEffect(()=>{
-      setCategoriesPromise(axios.get("/api/company/product/category"));
-      setProductsPromise(axios.get("/api/company/product"));
+      const categoryParam = searchParams.get('category');
+      if (categoryParam) {
+        setInitialCategory(categoryParam);
+        setProductsPromise(axios.get("/api/company/product/get_by_category", {params: {categoryName: categoryParam}}));
+      } else {
+        setProductsPromise(axios.get("/api/company/product"));
+      }
+      axios.get("/api/company/product/category").then(res => setCategories({data: res.data.data || res.data}));
   },[])
+
+  useEffect(() => {
+    if (initialCategory && categories.data.rows.length > 0) {
+      const category = categories.data.rows.find((cat: any) => cat.categoryName === initialCategory);
+      if (category) {
+        getSubcategories(category.$id, category.subcategory, category.categoryName);
+      }
+      setInitialCategory(''); // prevent re-run
+    }
+  }, [initialCategory, categories]);
 
   const getSubcategories = (id: string, subcategory: string[], categoryName: string)=>{
     axios.post("/api/company/product/category", {subcategory})
@@ -444,10 +465,10 @@ export default function Shop() {
                 />
             </div>
 
-            {categoriesPromise ? (
+            {categories.data.rows.length > 0 ? (
                 <Suspense fallback={<CategoriesSkeleton />}>
                     <CategoryList 
-                        categoriesPromise={categoriesPromise}
+                        categoriesData={categories}
                         categorySearch={categorySearch}
                         activeCatOrSubcatId={activeCatOrSubcatId}
                         activeCategoryId={activeCategoryId}
@@ -490,10 +511,10 @@ export default function Shop() {
             </div>
           </div>
 
-          {categoriesPromise ? (
+          {categories.data.rows.length > 0 ? (
               <Suspense fallback={<CategoriesSkeleton />}>
                   <CategoryList 
-                      categoriesPromise={categoriesPromise}
+                      categoriesData={categories}
                       categorySearch={categorySearch}
                       activeCatOrSubcatId={activeCatOrSubcatId}
                       activeCategoryId={activeCategoryId}

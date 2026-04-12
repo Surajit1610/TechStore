@@ -330,7 +330,7 @@ export default function Page() {
                     {featuredCategories.map(({ $id, categoryName, categoryImage }) => (
                         <div
                         key={$id}
-                        onClick={() => router.push('/shop')}
+                        onClick={() => router.push(`/shop?category=${encodeURIComponent(categoryName)}`)}
                         className='shrink-0 snap-start group w-24 sm:w-28 md:w-32 lg:w-40 flex flex-col items-center cursor-pointer'
                         >
                         <div className='w-full aspect-square mb-3 md:mb-4 rounded-full shadow-sm group-hover:shadow-xl border-4 border-transparent group-hover:border-blue-50 dark:group-hover:border-blue-900/30 overflow-hidden bg-gray-50 dark:bg-gray-800 transition-all duration-300'>
