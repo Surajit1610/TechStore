@@ -1,4 +1,4 @@
-import { db, notificationTable } from "@/models/name";
+import { db, notificationTable, customerTable } from "@/models/name";
 import { tablesDB } from "@/models/server/config";
 import { NextRequest, NextResponse } from "next/server";
 import { Query } from "appwrite";
@@ -30,5 +30,62 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         console.error("Error fetching notifications:", error);
         return NextResponse.json({ error: "Failed to fetch notifications" }, { status: 500 });
+    }
+}
+
+export async function PATCH(request: NextRequest) {
+    try {
+        const { userId } = await request.json();
+
+        if (!userId) {
+            return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+        }
+
+        await tablesDB.updateRow(db, customerTable, userId, {
+            hasUnreadNotification: false
+        });
+
+        return NextResponse.json({ success: true, message: "Notifications marked as read" });
+    } catch (error) {
+        console.error("Error updating unread notification status:", error);
+        return NextResponse.json({ error: "Failed to mark notifications as read" }, { status: 500 });
+    }
+}
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const { userId } = await request.json();
+
+        if (!userId) {
+            return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+        }
+
+        let hasMore = true;
+        let offset = 0;
+        const limit = 50;
+
+        while (hasMore) {
+            const notifications = await tablesDB.listRows(db, notificationTable, [
+                Query.equal("userId", userId),
+                Query.limit(limit),
+                Query.offset(offset)
+            ]);
+
+            if (notifications.rows.length === 0) {
+                hasMore = false;
+                break;
+            }
+
+            await Promise.all(
+                notifications.rows.map(row => tablesDB.deleteRow(db, notificationTable, row.$id))
+            );
+            
+            // Do not increment offset since we are deleting rows! Size shrinks.
+        }
+
+        return NextResponse.json({ success: true, message: "All notifications cleared" });
+    } catch (error) {
+        console.error("Error deleting notifications:", error);
+        return NextResponse.json({ error: "Failed to clear notifications" }, { status: 500 });
     }
 }

@@ -1,7 +1,8 @@
-import { db, onlineOrderTable, customerTable, itemTable, productTable, addressTable } from "@/models/name";
+import { db, onlineOrderTable, customerTable, itemTable, productTable, addressTable, notificationTable } from "@/models/name";
 import { tablesDB } from "@/models/server/config";
 import { NextResponse, NextRequest } from "next/server";
 import { Query } from "appwrite";
+import { ID } from "node-appwrite";
 
 export async function GET(request: NextRequest) {
   try {
@@ -92,6 +93,20 @@ export async function PATCH(request: NextRequest) {
       orderId,
       updateData
     );
+
+    if (status && updatedOrder.customerId) {
+      try {
+        await tablesDB.updateRow(db, customerTable, updatedOrder.customerId, {
+          hasUnreadNotification: true
+        });
+        await tablesDB.createRow(db, notificationTable, ID.unique(), {
+          userId: updatedOrder.customerId,
+          notification: `Update! Your order (#${orderId.slice(-6).toUpperCase()}) status is now: ${status}.`
+        });
+      } catch (notifErr) {
+        console.error("Failed to create order status update notification:", notifErr);
+      }
+    }
 
     return NextResponse.json({
       success: true,

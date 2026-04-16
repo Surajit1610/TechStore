@@ -1,4 +1,4 @@
-import { customerTable, db } from "@/models/name";
+import { customerTable, db, notificationTable } from "@/models/name";
 import { tablesDB, users } from "@/models/server/config";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -13,8 +13,18 @@ export async function POST(request: NextRequest){
             const response = await tablesDB.createRow(db, customerTable, ID as string, {
                 avatar: avatar,
                 name: name,
-                email: email
+                email: email,
+                hasUnreadNotification: true
             })
+
+            try {
+                await tablesDB.createRow(db, notificationTable, ID as string + Date.now().toString().slice(-6), {
+                    userId: ID,
+                    notification: `Welcome to TechShop, ${name.split(' ')[0]}! We're glad to have you here. Check out our latest deals!`
+                });
+            } catch (notifErr) {
+                console.error("Failed to create welcome notification", notifErr);
+            }
           
             return NextResponse.json(
                 response,

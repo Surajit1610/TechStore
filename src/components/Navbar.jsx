@@ -21,6 +21,8 @@ import { useAuthStore } from "@/store/Auth";
 import { useDataStore } from "@/store/Data";
 import ClickAwayListener from 'react-click-away-listener';
 import Link from "next/link";
+import { client } from "@/models/client/config";
+import { db, customerTable } from "@/models/name";
 import { toast } from 'react-toastify'
 
 function Navbar() {
@@ -46,6 +48,21 @@ function Navbar() {
       html.classList.add(theme);
     }
   }, [theme]);
+
+  // Real-time Notification logic
+  useEffect(() => {
+    if (userData?.$id) {
+      const unsubscribe = client.subscribe(
+        `databases.${db}.collections.${customerTable}.documents.${userData.$id}`,
+        (response) => {
+          // Whenever the user's document changes (like hasUnreadNotification flipping), 
+          // we instantly sync global store
+          setUserData(userData.$id);
+        }
+      );
+      return () => unsubscribe();
+    }
+  }, [userData?.$id, setUserData]);
 
   const handleLogout = async () => {
     await logout();
@@ -130,7 +147,7 @@ function Navbar() {
                   aria-label="Notifications"
                 >
                   <IconBellFilled size={22} className="hover:scale-110 transition-transform" />
-                  {user?.hasUnreadNotification && (
+                  {userData?.hasUnreadNotification && (
                     <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 border-2 border-white dark:border-gray-950 rounded-full"></span>
                   )}
                 </button>

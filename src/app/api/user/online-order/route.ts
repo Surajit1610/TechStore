@@ -1,4 +1,4 @@
-import { db, customerTable, onlineOrderTable, addressTable, itemTable, productTable } from "@/models/name";
+import { db, customerTable, onlineOrderTable, addressTable, itemTable, productTable, notificationTable } from "@/models/name";
 import { tablesDB } from "@/models/server/config";
 import { NextRequest, NextResponse } from "next/server";
 import { ID } from "node-appwrite";
@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
 
     const updateData: any = {
       orderHistory: currentOrderHistory,
+      hasUnreadNotification: true, // Show unseen dot in Navbar
     };
 
     if (!isDirect) {
@@ -80,6 +81,15 @@ export async function POST(request: NextRequest) {
 
     await tablesDB.updateRow(db, customerTable, customerId, updateData);
 
+    // Create a new notification
+    try {
+      await tablesDB.createRow(db, notificationTable, ID.unique(), {
+        userId: customerId,
+        notification: `Order Confirmed! Your order (#${onlineOrder.$id.slice(-6).toUpperCase()}) has been successfully placed.`,
+      });
+    } catch (notifConfErr) {
+      console.error("Failed to create placement notification:", notifConfErr);
+    }
     
     return NextResponse.json(onlineOrder);
   } catch (error) {
