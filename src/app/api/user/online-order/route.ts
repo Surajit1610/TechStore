@@ -29,14 +29,25 @@ export async function POST(request: NextRequest) {
     for (const id of itemId) {
         try {
             const item = await tablesDB.getRow(db, itemTable, id);
+            if (!item) {
+                return NextResponse.json({ error: "Cart item not found" }, { status: 400 });
+            }
             if (item && item.productId) {
                 const product = await tablesDB.getRow(db, productTable, item.productId);
                 if (product && typeof product.finalPrice === 'number') {
                     serverTotalAmount += product.finalPrice * item.quantity;
+                    // Sync the snapshot item with the latest price at checkout to ensure order history uses the current live price
+                    await tablesDB.updateRow(db, itemTable, id, { 
+                        price: product.finalPrice,
+                        productName: product.productName
+                    });
+                } else {
+                    return NextResponse.json({ error: "One or more products in your cart are no longer available" }, { status: 400 });
                 }
             }
         } catch (err) {
             console.error(`Error fetching item/product details for item ID ${id}:`, err);
+            return NextResponse.json({ error: "Internal server error during validation" }, { status: 500 });
         }
     }
 

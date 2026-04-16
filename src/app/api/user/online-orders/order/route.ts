@@ -31,9 +31,13 @@ export async function POST(request: NextRequest) {
           try {
             const item = await tablesDB.getRow(db, itemTable, id);
             if (item && item.productId) {
-              const product = await tablesDB.getRow(db, productTable, item.productId);
-              if (product && product.images && product.images.length > 0) {
-                item.imageUrl = product.images[0];
+              try {
+                const product = await tablesDB.getRow(db, productTable, item.productId);
+                if (product && product.images && product.images.length > 0) {
+                  item.imageUrl = product.images[0];
+                }
+              } catch (productErr) {
+                console.log(`Product ${item.productId} not found for historic order item, skipping live image fetch.`);
               }
             }
             return item;

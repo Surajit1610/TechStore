@@ -83,12 +83,18 @@ export default function CartPage() {
 	}, [userData]);
 
 
-	const subtotal = items.reduce((s, it) => s + (Number(it.price) || 0) * (Number(it.quantity) || 0), 0);
+	const subtotal = items.reduce((s, it) => {
+		const product = productMap[it.productId];
+		const itemPrice = product && typeof product.finalPrice === 'number' ? product.finalPrice : 0;
+		return s + (Number(itemPrice) || 0) * (Number(it.quantity) || 0);
+	}, 0);
+
+	const hasUnavailableItems = items.some(it => !productMap[it.productId] || productMap[it.productId].error);
 
 	const verifyPayment = async (orderId: string) => {
 		try {
 			const itemIds = userData.cartId || items.map((i) => i.$id);
-			const res = await axios.post("/api/user/online-order/verify-cashfree", {
+			const res = await axios.post<any>("/api/user/online-order/verify-cashfree", {
 				orderId,
 				customerId: userData.$id,
 				addressID: selectedAddress,
@@ -146,7 +152,7 @@ export default function CartPage() {
 					phone: userData.phone || "9999999999"
 				};
 				
-				const sessionRes = await axios.post("/api/user/online-order/create-cashfree", customerDetails);
+				const sessionRes = await axios.post<any>("/api/user/online-order/create-cashfree", customerDetails);
 				if (sessionRes.data?.error) {
 					toast.error("Could not initiate payment");
 					setIsOrdering(false);
@@ -181,7 +187,7 @@ export default function CartPage() {
 		} else {
 			try {
 				const itemIds = userData.cartId || items.map((i) => i.$id);
-				const res = await axios.post("/api/user/online-order", {
+				const res = await axios.post<any>("/api/user/online-order", {
 					customerId: userData.$id,
 					addressID: selectedAddress,
 					itemId: itemIds,
@@ -216,7 +222,7 @@ export default function CartPage() {
 			return;
 		}
 		try {
-			const res = await axios.patch('/api/item', { id: itemId, quantity: newQty });
+			const res = await axios.patch<any>('/api/item', { id: itemId, quantity: newQty });
 			if (res.data?.error) {
 				toast.error('Failed to update quantity');
 				return;
@@ -234,7 +240,7 @@ export default function CartPage() {
 			return;
 		}
 		try {
-			const res = await axios.post('/api/user/cart/remove', { customerID: userData.$id, itemID: itemId });
+			const res = await axios.post<any>('/api/user/cart/remove', { customerID: userData.$id, itemID: itemId });
 			if (res.data?.success) {
 				setItems((prev) => prev.filter((it) => it.$id !== itemId));
 				if (setUserData) await setUserData(userData.$id);
@@ -294,27 +300,39 @@ export default function CartPage() {
 							}
 							return (
 								<div key={it.$id} className="p-4 border rounded-2xl bg-card shadow-sm hover:shadow-md transition-all flex sm:gap-6 gap-4 items-center sm:flex-row flex-col">
-									{imgSrc ? (
-										<a href={`/shop/product/${product?.slug || it.productId}`} className="w-28 h-28 shrink-0 overflow-hidden rounded-xl border bg-gray-50 dark:bg-gray-800/50">
-											<img src={imgSrc} alt={it.productName} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+									{imgSrc && product && !product.error ? (
+										<a href={`/shop/product/${product.slug}`} className="w-28 h-28 shrink-0 overflow-hidden rounded-xl border bg-gray-50 dark:bg-gray-800/50">
+											<img src={imgSrc} alt={product.productName || it.productName} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
 										</a>
 									) : (
-										<div className="w-28 h-28 bg-gray-100 dark:bg-gray-800/50 rounded-xl flex items-center justify-center text-xs text-gray-400 shrink-0 border">No Image</div>
+										<div className="w-28 h-28 bg-gray-100 dark:bg-gray-800/50 rounded-xl flex items-center justify-center text-xs text-gray-400 shrink-0 border text-center p-2">
+											{product && !product.error ? "No Image" : "Unavailable"}
+										</div>
 									)}
 									<div className="flex-1 flex flex-col sm:flex-row justify-between w-full gap-4">
 										<div className="flex-1 space-y-2">
-											<a href={`/shop/product/${product?.slug || it.productId}`} className="font-semibold text-lg text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 line-clamp-2 transition-colors">
-												{it.productName}
-											</a>
-											<p className="text-sm text-gray-500 font-medium">₹{Number(it.price).toFixed(2)}</p>
-											<div className="mt-4 flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50 w-fit p-1.5 rounded-xl border">
+											{product && !product.error ? (
+												<a href={`/shop/product/${product.slug}`} className="font-semibold text-lg text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 line-clamp-2 transition-colors">
+													{product.productName}
+												</a>
+											) : (
+												<p className="font-semibold text-lg text-gray-400 dark:text-gray-500 line-clamp-2 italic">
+													{it.productName} (Unavailable)
+												</p>
+											)}
+											{product && !product.error ? (
+												<p className="text-sm text-gray-500 font-medium">₹{Number(product.finalPrice).toFixed(2)}</p>
+											) : (
+												<p className="text-sm text-red-500 font-medium">Out of Stock</p>
+											)}
+											<div className={`mt-4 flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50 w-fit p-1.5 rounded-xl border ${(!product || product.error) ? 'opacity-50 pointer-events-none' : ''}`}>
 												<button onClick={() => handleUpdateQuantity(it.$id, it.quantity - 1)} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm rounded-lg transition-all text-gray-600 dark:text-gray-300 active:scale-95"><IconMinus size={16} /></button>
 												<span className="w-8 text-center font-semibold text-sm">{it.quantity}</span>
 												<button onClick={() => handleUpdateQuantity(it.$id, it.quantity + 1)} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm rounded-lg transition-all text-gray-600 dark:text-gray-300 active:scale-95"><IconPlus size={16} /></button>
 											</div>
 										</div>
 										<div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center w-full sm:w-auto mt-2 sm:mt-0 border-t sm:border-t-0 pt-4 sm:pt-0">
-											<p className="font-bold text-xl text-gray-900 dark:text-gray-100">₹{(it.price * it.quantity).toFixed(2)}</p>
+											<p className="font-bold text-xl text-gray-900 dark:text-gray-100">₹{product && !product.error ? (product.finalPrice * it.quantity).toFixed(2) : "0.00"}</p>
 											<button onClick={() => handleRemove(it.$id)} className="mt-3 text-sm text-red-500 hover:text-red-700 font-medium px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex items-center gap-2 active:scale-95">
 												<IconTrash size={18} />
 												<span className="sm:hidden lg:inline">Remove</span>
@@ -335,6 +353,11 @@ export default function CartPage() {
 								<span>Subtotal ({items.length} items)</span>
 								<span className="font-semibold text-gray-900 dark:text-gray-100">₹{subtotal.toFixed(2)}</span>
 							</div>
+							{hasUnavailableItems && (
+								<div className="text-sm p-4 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 rounded-xl border border-red-200 dark:border-red-900/50 mt-4">
+									Some items in your cart are no longer available. Please remove them to proceed.
+								</div>
+							)}
 							
 							<div className="border-t pt-6">
 								<h3 className="font-semibold mb-4 flex items-center gap-2 text-lg"><IconMapPin size={20} className="text-blue-500"/> Shipping Address</h3>
@@ -403,7 +426,7 @@ export default function CartPage() {
 								
 								<button
 									onClick={handleCreateOrder}
-									disabled={isOrdering || addresses.length === 0}
+									disabled={isOrdering || addresses.length === 0 || hasUnavailableItems}
 									className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-xl shadow-md hover:shadow-lg disabled:opacity-50 disabled:shadow-none transition-all flex justify-center items-center gap-3 active:scale-[0.98]"
 								>
 									{isOrdering ? (
