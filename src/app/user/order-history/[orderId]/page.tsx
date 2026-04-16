@@ -94,7 +94,7 @@ export default function OrderDetailsPage() {
     if (!orderId) return;
     setLoading(true);
     try {
-      const res = await axios.post("/api/user/online-orders/order", { orderId });
+      const res = await axios.post<any>("/api/user/online-orders/order", { orderId });
       if (res.data && res.data.$id) {
         setOrder(res.data);
       } else {
@@ -125,7 +125,7 @@ export default function OrderDetailsPage() {
     setTracking(null);
     try {
       const trackingId = (order.awb || order.shiprocketOrderId) as string;
-      const res = await axios.get(`/api/company/shiprocket-track?orderId=${encodeURIComponent(trackingId)}`);
+      const res = await axios.get<any>(`/api/company/shiprocket-track?orderId=${encodeURIComponent(trackingId)}`);
       if (res.data?.success) {
         setTracking(res.data.data);
       } else {
@@ -149,7 +149,7 @@ export default function OrderDetailsPage() {
 
     setCancelling(true);
     try {
-      await axios.patch(`/api/company/online-orders`, {
+      await axios.patch<any>(`/api/company/online-orders`, {
         orderId: order.$id,
         status: "cancelled by customer",
       });

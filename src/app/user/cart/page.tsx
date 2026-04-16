@@ -41,14 +41,14 @@ export default function CartPage() {
 			try {
 				// fetch cart items
 				if (userData.cartId && userData.cartId.length > 0) {
-					const promises = userData.cartId.map((id: string) => axios.get(`/api/item?id=${id}`));
+					const promises = userData.cartId.map((id: string) => axios.get<any>(`/api/item?id=${id}`));
 					const responses = await Promise.all(promises);
 					const fetched: CartItem[] = responses.map((r) => r.data);
 					setItems(fetched);
 
 					// fetch product details for images / links
 					const uniqueProductIds = Array.from(new Set(fetched.map((f) => f.productId)));
-					const prodPromises = uniqueProductIds.map((pid) => axios.post('/api/company/product/get-product', { id: pid }));
+					const prodPromises = uniqueProductIds.map((pid) => axios.post<any>('/api/company/product/get-product', { id: pid }));
 					const prodResponses = await Promise.allSettled(prodPromises);
 					const map: Record<string, any> = {};
 					prodResponses.forEach((res, idx) => {

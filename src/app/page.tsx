@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client"
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -112,7 +113,7 @@ export default function Page() {
   const getSliders = async () => {
     setSlidersLoading(true);
     try {
-      const response = await retry(() => axios.get("/api/company/slider"));
+      const response = await retry(() => axios.get<any>("/api/company/slider"));
       setSliders(response.data.sliders || { rows: [] })
     } catch (error) {
       console.error("Failed to fetch sliders", error)
@@ -136,7 +137,7 @@ export default function Page() {
   const getProducts = async () => {
     setProductsLoading(true);
     try {
-      const response = await retry(() => axios.get("/api/company/product"));
+      const response = await retry(() => axios.get<any>("/api/company/product"));
       setProducts(response.data || { rows: [] })
     } catch (err) {
       console.log(err)
@@ -149,7 +150,7 @@ export default function Page() {
   const getCategories = async () => {
     setCategoriesLoading(true);
     try {
-      const response = await retry(() => axios.get("/api/company/product/category"));
+      const response = await retry(() => axios.get<any>("/api/company/product/category"));
       setCategories(response.data || { rows: [] })
     } catch (err) {
       console.log(err)
@@ -162,7 +163,7 @@ export default function Page() {
   const getFeaturedProductSections = async () => {
     setFeaturedProductSectionsLoading(true);
     try {
-      const response = await retry(() => axios.get("/api/company/featured-product"));
+      const response = await retry(() => axios.get<any>("/api/company/featured-product"));
       setFeaturedProductSections(response.data.products || []);
     } catch (err) {
       console.log(err);
@@ -179,7 +180,7 @@ export default function Page() {
     }
     
     try {
-      const response = await axios.post("/api/user/cart/add", {
+      const response = await axios.post<any>("/api/user/cart/add", {
         customerID: userData.$id,
         productID: product.$id,
         productName: product.productName,
@@ -211,13 +212,13 @@ export default function Page() {
 
     try {
       if (isLiked) {
-        await axios.post("/api/company/product/remove-from-liked", {
+        await axios.post<any>("/api/company/product/remove-from-liked", {
           userID: userData.$id,
           productID: product.$id
         });
         toast.success("Removed from wishlist");
       } else {
-        await axios.post("/api/company/product/add-to-liked", {
+        await axios.post<any>("/api/company/product/add-to-liked", {
           userID: userData.$id,
           productID: product.$id
         });

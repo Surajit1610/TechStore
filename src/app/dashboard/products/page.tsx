@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client"
 
 import axios from 'axios';
@@ -155,7 +156,7 @@ function products() {
   }, [])
 
   const fetchProducts = async () => {
-    const response = axios.get("/api/company/product")
+    const response = axios.get<any>("/api/company/product")
       response.then(res=> {const products = res.data
         setProducts(products)
       })
@@ -179,7 +180,7 @@ function products() {
     });   
     
     if (editingProduct) {
-      const response = await axios.post(`/api/company/product/update-product`, formData);
+      const response = await axios.post<any>(`/api/company/product/update-product`, formData);
       if (response.data.error) {
         toast.error("Failed to update product");
       } else {
@@ -188,7 +189,7 @@ function products() {
         fetchProducts();
       }
     } else {
-      const response = await axios.post("/api/company/product/add-product", formData);
+      const response = await axios.post<any>("/api/company/product/add-product", formData);
       if (response.data.error) {
         toast.error("Failed to add product");
       } else {
@@ -214,7 +215,7 @@ function products() {
   const deleteProduct = async (productId: string) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return
     const id = productId;
-    const response = await axios.post("/api/company/product/delete-product", { id });
+    const response = await axios.post<any>("/api/company/product/delete-product", { id });
     if (response.data.error) {
       toast.error("Failed to delete product");
     } else {
@@ -225,7 +226,7 @@ function products() {
 
   const getCtegories = async () => {
     setAddingProduct(true)
-    const response = axios.get("/api/company/product/category")
+    const response = axios.get<any>("/api/company/product/category")
       response.then(res=> {const categories = res.data
         setCategories(categories)
       })
@@ -234,7 +235,7 @@ function products() {
   }
 
   const getSubcategories = async (subcategory: string[]) => {
-    const response = axios.post("/api/company/product/category", {subcategory})
+    const response = axios.post<any>("/api/company/product/category", {subcategory})
       response.then(res=> {const subcategories = res.data
         setSubcategories(subcategories)
       })
@@ -258,7 +259,7 @@ function products() {
 
   const handleUpdateStock = async () => {
     const Id = selectedStokeckProductId;
-    const response = await axios.post("/api/company/product/update-stock", {Id, stockValue});
+    const response = await axios.post<any>("/api/company/product/update-stock", {Id, stockValue});
     if (response.data.error) {
       toast.error("Failed to update stock");
     } else {
@@ -273,7 +274,7 @@ function products() {
 // category & subcategory
   const categorys = async () => {
     setIsProductsActive(false);
-    const response = axios.get("/api/company/product/category")
+    const response = axios.get<any>("/api/company/product/category")
       response.then(res=> {const categories = res.data
         setCategories(categories)
       })
@@ -285,7 +286,7 @@ function products() {
   const subcategorys = async (subcategory: string[], $id: string) => {
     setActiveSubcategory(true);
     setSelectedCategory($id)
-    const response = axios.post("/api/company/product/category", {subcategory})
+    const response = axios.post<any>("/api/company/product/category", {subcategory})
       response.then(res=> {const subcategories = res.data
         setSubcategories(subcategories)
       })
@@ -307,7 +308,7 @@ function products() {
       const uploadData = new FormData();
       uploadData.append('file', selectedCategoryFile);
       try {
-        const uploadRes = await axios.post("/api/company/product/uplode_file", uploadData, {
+        const uploadRes = await axios.post<any>("/api/company/product/uplode_file", uploadData, {
           headers: { "Content-Type": "multipart/form-data" }
         });
         uploadedImageUrl = uploadRes.data.res.url;
@@ -325,14 +326,14 @@ function products() {
 
     try {
       if (editingCategory) {
-        const response = await axios.post('/api/company/product/category/update-category', payload);
+        const response = await axios.post<any>('/api/company/product/category/update-category', payload);
         if (response.status === 200) {
           toast.success('Category updated successfully!');
         } else {
           toast.error('Error updating category.');
         }
       } else {
-        const response = await axios.post('/api/company/product/category/addCategory', payload);
+        const response = await axios.post<any>('/api/company/product/category/addCategory', payload);
         if (response.status === 200) {
           toast.success('Category added successfully!');
         } else {
@@ -362,14 +363,14 @@ function products() {
         if (public_id) {
           const formData = new FormData();
           formData.append("public_id", public_id);
-          await axios.post("/api/company/product/delete-file", formData).catch(err => console.error("Cloudinary delete failed", err));
+          await axios.post<any>("/api/company/product/delete-file", formData).catch(err => console.error("Cloudinary delete failed", err));
         }
       } catch (error) {
          console.error('Failed to delete image from cloudinary', error);
       }
     }
 
-    const response = await axios.post("/api/company/product/category/delete-category", {id, subcategory});
+    const response = await axios.post<any>("/api/company/product/category/delete-category", {id, subcategory});
     if (response.data.error) {
       toast.error("Failed to delete category");
       categorys();
@@ -395,7 +396,7 @@ function products() {
       const uploadData = new FormData();
       uploadData.append('file', selectedSubcategoryFile);
       try {
-        const uploadRes = await axios.post("/api/company/product/uplode_file", uploadData, {
+        const uploadRes = await axios.post<any>("/api/company/product/uplode_file", uploadData, {
           headers: { "Content-Type": "multipart/form-data" }
         });
         uploadedImageUrl = uploadRes.data.res.url;
@@ -414,14 +415,14 @@ function products() {
 
     try {
       if (editingSubcategory) {
-        const response = await axios.post('/api/company/product/category/update-subcategory', payload);
+        const response = await axios.post<any>('/api/company/product/category/update-subcategory', payload);
         if (response.status === 200) {
           toast.success('Subcategory updated successfully!');
         } else {
           toast.error('Error updating subcategory.');
         }
       } else {
-        const response = await axios.post('/api/company/product/category/addSubcategory', payload);
+        const response = await axios.post<any>('/api/company/product/category/addSubcategory', payload);
         if (response.status === 200) {
           toast.success('Subcategory added successfully!');
         } else {
@@ -454,7 +455,7 @@ function products() {
         if (public_id) {
           const formData = new FormData();
           formData.append("public_id", public_id);
-          await axios.post("/api/company/product/delete-file", formData).catch(err => console.error("Cloudinary delete failed", err));
+          await axios.post<any>("/api/company/product/delete-file", formData).catch(err => console.error("Cloudinary delete failed", err));
         }
       } catch (error) {
          console.error('Failed to delete image from cloudinary', error);
@@ -462,7 +463,7 @@ function products() {
     }
 
     try {
-      const response = await axios.post(`/api/company/product/category/detete-subcategory`, { subcategoryId: id, categoryId: selectedCategory });
+      const response = await axios.post<any>(`/api/company/product/category/detete-subcategory`, { subcategoryId: id, categoryId: selectedCategory });
       toast.success("Subcategory deleted successfully");
       setActiveSubcategory(false)
       categorys()

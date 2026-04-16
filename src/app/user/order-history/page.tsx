@@ -67,7 +67,7 @@ export default function CustomerOnlineOrderHistory() {
     if (!userData || !userData.$id) return;
     setLoading(true);
     try {
-      const res = await axios.get(`/api/user/online-orders?customerId=${userData.$id}`);
+      const res = await axios.get<any>(`/api/user/online-orders?customerId=${userData.$id}`);
       setOrders(res.data.rows || []);
     } catch (err) {
       console.error(err);

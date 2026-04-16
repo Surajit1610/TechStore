@@ -73,7 +73,7 @@ export default function Register() {
                 console.log(avatar);;
                 
 
-                const userResponse = await axios.post("/api/user/register", {ID, name, email, avatar})
+                const userResponse = await axios.post<any>("/api/user/register", {ID, name, email, avatar})
                 console.log(userResponse.data);
            
                 const loginResponse = await login(email.toString(), password.toString());
