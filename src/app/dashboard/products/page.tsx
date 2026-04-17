@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client"
 
-import axios from 'axios';
+import axios from "@/lib/axios";
 import React, { useState, useEffect } from 'react'
 import { IconCaretDownFilled, IconPlus, IconEdit, IconX, IconSearch } from '@tabler/icons-react';
 import { Input } from '@/components/ui/input';

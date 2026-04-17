@@ -1,10 +1,14 @@
+import { authenticateServer } from "@/lib/serverAuth";
 import { db, onlineOrderTable, customerTable, itemTable } from "@/models/name";
-import { tablesDB } from "@/models/server/config";
 import { NextRequest, NextResponse } from "next/server";
 import { Query } from "appwrite";
 
 export async function GET(request: NextRequest) {
   try {
+        const auth = await authenticateServer(request);
+        if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const tablesDB = auth.dbClient;
+
     const url = new URL(request.url);
     const customerId = url.searchParams.get("customerId");
     const page = parseInt(url.searchParams.get("page") || "1", 10);

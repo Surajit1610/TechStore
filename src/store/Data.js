@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
-import axios from "axios";
+import axios from "@/lib/axios";
 
 
 export const useDataStore = create()(

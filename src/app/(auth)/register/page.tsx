@@ -14,7 +14,7 @@ import { LoaderOne } from '@/components/ui/loader';
 import { account, avatars } from '@/models/client/config';
 import { OAuthProvider } from 'appwrite';
 import { redirect } from 'next/navigation';
-import axios from 'axios';
+import axios from "@/lib/axios";
 
 
 

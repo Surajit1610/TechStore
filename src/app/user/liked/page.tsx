@@ -6,7 +6,7 @@ import React, { useEffect, useState, Suspense } from 'react'
 import { IconHeart, IconTrash, IconShoppingCart, IconHeartBroken } from '@tabler/icons-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
-import axios from 'axios'
+import axios from "@/lib/axios";
 import { useAuthStore } from '@/store/Auth'
 import { useDataStore } from "@/store/Data"
 import Loading from './loading' // Use the skeleton component

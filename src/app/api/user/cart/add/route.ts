@@ -1,10 +1,14 @@
+import { authenticateServer } from "@/lib/serverAuth";
 import { db, customerTable, itemTable } from "@/models/name";
-import { tablesDB } from "@/models/server/config";
 import { NextRequest, NextResponse } from "next/server";
 import { ID } from "appwrite";
 
 export async function POST(req: NextRequest) {
   try {
+        const auth = await authenticateServer(req);
+        if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const tablesDB = auth.dbClient;
+
     const body = await req.json();
     const { customerID, productID, qty, productName, slug, price } = body;
     if (!customerID || !productID || !productName || !slug || !qty || qty < 1 || !price || price < 1) {

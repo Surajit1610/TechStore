@@ -1,3 +1,4 @@
+import { authenticateServer } from "@/lib/serverAuth";
 import { db, customerTable, notificationTable } from "@/models/name";
 import { tablesDB } from "@/models/server/config";
 import { NextRequest, NextResponse } from "next/server";
@@ -5,6 +6,9 @@ import { ID, Query } from "appwrite";
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await authenticateServer(request);
+        if (!auth || !auth.user.labels?.includes("owner")) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
         const { message } = await request.json();
 
         if (!message || message.trim() === '') {

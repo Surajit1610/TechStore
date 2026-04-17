@@ -1,7 +1,7 @@
+import { authenticateServer } from "@/lib/serverAuth";
 import { NextRequest, NextResponse } from "next/server";
 import { Cashfree, CFEnvironment } from "cashfree-pg";
 import { db, customerTable, onlineOrderTable, customerPaymentTable, itemTable, productTable, addressTable } from "@/models/name";
-import { tablesDB } from "@/models/server/config";
 import { ID } from "node-appwrite";
 
 const cashfree = new Cashfree(
@@ -12,6 +12,10 @@ const cashfree = new Cashfree(
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await authenticateServer(request);
+        if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const tablesDB = auth.dbClient;
+
         const { orderId, customerId, addressID, itemId, shipping_charge, isDirect } = await request.json();
 
         // Calculate expected total amount server-side

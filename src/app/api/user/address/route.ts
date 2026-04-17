@@ -1,6 +1,6 @@
 
 import { db, addressTable } from "@/models/name";
-import { tablesDB } from "@/models/server/config";
+import { authenticateServer } from "@/lib/serverAuth";
 import { NextResponse } from "next/server";
 import { ID, Query } from "node-appwrite";
 
@@ -14,6 +14,10 @@ export async function GET(request: Request) {
                 error: "Customer ID is required"
             }, { status: 400 });
         }
+
+        const auth = await authenticateServer(request);
+        if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const tablesDB = auth.dbClient;
 
         const response = await tablesDB.listRows(db, addressTable, [
             Query.equal("customerId", customerId)
@@ -39,6 +43,10 @@ export async function POST(request: Request) {
                 error: "All fields are required"
             }, { status: 400 });
         }
+
+        const auth = await authenticateServer(request);
+        if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const tablesDB = auth.dbClient;
 
         const newAddress = await tablesDB.createRow(db, addressTable, ID.unique(), {
             customerId,
@@ -70,6 +78,10 @@ export async function PUT(request: Request) {
             }, { status: 400 });
         }
 
+        const auth = await authenticateServer(request);
+        if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const tablesDB = auth.dbClient;
+
         const updatedAddress = await tablesDB.updateRow(db, addressTable, documentId, {
             location,
             city,
@@ -98,6 +110,10 @@ export async function DELETE(request: Request) {
                 error: "Document ID is required"
             }, { status: 400 });
         }
+
+        const auth = await authenticateServer(request);
+        if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const tablesDB = auth.dbClient;
 
         await tablesDB.deleteRow(db, addressTable, documentId);
 

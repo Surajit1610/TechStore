@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { toast } from 'react-toastify';
 import { v4 as uuidv4 } from 'uuid';
 import { IconLoader2, IconTrash } from "@tabler/icons-react";
-import axios from "axios";
+import axios from "@/lib/axios";
 import {useSellerStore} from "@/store/Seller"
 
 export function Uploder(){

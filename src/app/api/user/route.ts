@@ -1,5 +1,5 @@
 import { db, onlineOrderTable, customerTable, itemTable } from "@/models/name";
-import { tablesDB } from "@/models/server/config";
+import { authenticateServer } from "@/lib/serverAuth";
 import { NextRequest, NextResponse } from "next/server";
 import { Query } from "appwrite";
 
@@ -14,6 +14,10 @@ export async function GET(request: NextRequest) {
     if (!customerId) {
       return NextResponse.json({ error: "customerId is required" }, { status: 400 });
     }
+
+    const auth = await authenticateServer(request);
+    if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const tablesDB = auth.dbClient;
 
     const orders = await tablesDB.listRows(db, onlineOrderTable, [
       Query.equal("customerId", customerId),
@@ -46,6 +50,10 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest){
   try {
     const {ID} = await request.json()
+
+    const auth = await authenticateServer(request);
+    if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const tablesDB = auth.dbClient;
 
     const user = await tablesDB.getRow(db, customerTable, ID)
 

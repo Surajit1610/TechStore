@@ -8,7 +8,7 @@ import Navbar from '../components/Navbar'
 import Footer from '@/components/Footer'
 import { IconArrowRight, IconTruck, IconClock, IconShieldCheck, IconLeaf, IconChevronLeft, IconChevronRight, IconHeart, IconShoppingCart } from '@tabler/icons-react'
 import { useRouter } from 'next/navigation'
-import axios from 'axios'
+import axios from "@/lib/axios";
 import { toast } from 'react-toastify'
 import { useAuthStore } from '@/store/Auth'
 import { useDataStore } from '@/store/Data'

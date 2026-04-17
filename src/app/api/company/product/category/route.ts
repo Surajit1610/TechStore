@@ -1,3 +1,4 @@
+import { authenticateServer } from "@/lib/serverAuth";
 import { categoryTable, subcategoryTable, db } from "@/models/name";
 import { tablesDB } from "@/models/server/config";
 import { Query } from "appwrite";
@@ -16,6 +17,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
     try {
+        const auth = await authenticateServer(request);
+        if (!auth || !auth.user.labels?.includes("owner")) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
         const { subcategory }: { subcategory: string[] } = await request.json();
         const subcategorys: { $id: string, subcategoryName: string, subcategoryImage: string }[] = [];
 

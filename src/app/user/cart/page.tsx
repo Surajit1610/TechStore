@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axios from "@/lib/axios";
 import { useDataStore } from "@/store/Data";
 import { toast } from "react-toastify";
 import { IconMinus, IconPlus, IconMapPin, IconTrash, IconShoppingCartOff } from "@tabler/icons-react";

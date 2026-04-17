@@ -1,3 +1,4 @@
+import { authenticateServer } from "@/lib/serverAuth";
 import { productTable, db } from "@/models/name";
 import { tablesDB } from "@/models/server/config";
 import { Query } from "appwrite";

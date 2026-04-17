@@ -1,3 +1,4 @@
+import { authenticateServer } from "@/lib/serverAuth";
 import {db, categoryTable, subcategoryTable} from "@/models/name";
 import {tablesDB} from "@/models/server/config";
 import {Query} from "appwrite";
@@ -5,6 +6,9 @@ import {NextResponse, NextRequest} from "next/server";
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await authenticateServer(request);
+        if (!auth || !auth.user.labels?.includes("owner")) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
         const { id, subcategory }: { id: string, subcategory: string[] } = await request.json();
 
         // Delete subcategories associated with the category

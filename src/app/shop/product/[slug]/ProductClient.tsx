@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
-import axios from "axios"
+import axios from "@/lib/axios";
 import { toast } from "react-toastify"
 import Footer from "@/components/Footer"
 import { IconMinus, IconPlus, IconShoppingCart, IconHeartFilled, IconHeart, IconShare, IconMapPin, IconX, IconTruck, IconShieldCheck } from "@tabler/icons-react"

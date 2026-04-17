@@ -1,8 +1,7 @@
+import { authenticateServer } from "@/lib/serverAuth";
 import { NextRequest, NextResponse } from "next/server";
 import { Cashfree, CFEnvironment } from "cashfree-pg";
 import { db, customerTable, itemTable, productTable } from "@/models/name";
-import { tablesDB } from "@/models/server/config";
-
 const cashfree = new Cashfree(
     CFEnvironment.SANDBOX,
     process.env.CASHFREE_CLIENT_ID,
@@ -11,6 +10,10 @@ const cashfree = new Cashfree(
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await authenticateServer(request);
+        if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const tablesDB = auth.dbClient;
+
         const { customerId, phone, name, email, isDirect, itemId } = await request.json();
 
         if (!customerId) {

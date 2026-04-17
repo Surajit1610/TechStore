@@ -1,3 +1,4 @@
+import { authenticateServer } from "@/lib/serverAuth";
 import { db, sliderTable } from "@/models/name";
 import { NextResponse, NextRequest } from "next/server";
 import { tablesDB } from "@/models/server/config";
@@ -5,6 +6,9 @@ import { ID } from "node-appwrite";
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await authenticateServer(request);
+        if (!auth || !auth.user.labels?.includes("owner")) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
         const { sliderImage } = await request.json();
         
         const slider = await tablesDB.createRow(db, sliderTable, ID.unique(), {

@@ -1,10 +1,14 @@
 import { db, itemTable } from "@/models/name";
-import { tablesDB } from "@/models/server/config";
+import { authenticateServer } from "@/lib/serverAuth";
 import { NextResponse, NextRequest } from "next/server";
 import { ID } from "node-appwrite";
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await authenticateServer(request);
+        if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const tablesDB = auth.dbClient;
+
         const data = await request.json();
         const { productId, productName, quantity, price, slug } = data;
         const response = await tablesDB.createRow(db, itemTable, ID.unique(), {
@@ -28,6 +32,11 @@ export async function GET(request: NextRequest) {
         if (!id) {
             return NextResponse.json({ error: "id is required" }, { status: 400 });
         }
+
+        const auth = await authenticateServer(request);
+        if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const tablesDB = auth.dbClient;
+
         const response = await tablesDB.getRow(db, itemTable, id);
         return NextResponse.json(response);
     } catch (error) {
@@ -43,6 +52,10 @@ export async function PATCH(request: NextRequest) {
         if (!id) {
             return NextResponse.json({ error: "id is required" }, { status: 400 });
         }
+
+        const auth = await authenticateServer(request);
+        if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const tablesDB = auth.dbClient;
 
         const updateData: any = {};
         if (typeof quantity !== 'undefined') updateData.quantity = quantity;

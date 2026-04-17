@@ -1,9 +1,13 @@
+import { authenticateServer } from "@/lib/serverAuth";
 import { productTable, db } from "@/models/name";
 import { tablesDB } from "@/models/server/config";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await authenticateServer(request);
+        if (!auth || !auth.user.labels?.includes("owner")) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
         const formData = await request.formData()
         const productId = formData.get("productId") as string; // Ensure productId is treated as a string
         const productName = formData.get("productName")

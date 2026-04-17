@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import axios from 'axios';
+import axios from "@/lib/axios";
 import { toast } from 'react-toastify';
 import { IconSend, IconSpeakerphone, IconLoader2, IconUsers } from '@tabler/icons-react';
 

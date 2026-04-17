@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import axios from "axios";
+import axios from "@/lib/axios";
 import { toast } from "react-toastify";
 import Image from "next/image";
 import { 

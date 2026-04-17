@@ -1,10 +1,14 @@
+import { authenticateServer } from "@/lib/serverAuth";
 import { db, customerTable, onlineOrderTable, addressTable, itemTable, productTable, notificationTable } from "@/models/name";
-import { tablesDB } from "@/models/server/config";
 import { NextRequest, NextResponse } from "next/server";
 import { ID } from "node-appwrite";
 
 export async function POST(request: NextRequest) {
   try {
+        const auth = await authenticateServer(request);
+        if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const tablesDB = auth.dbClient;
+
     const data = await request.json();
     const { customerId, addressID, itemId, shipping_charge, paymentType, isDirect } = data;
 

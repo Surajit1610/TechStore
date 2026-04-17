@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from "@/store/Auth";
 import { useDataStore } from "@/store/Data";
-import axios from 'axios';
+import axios from "@/lib/axios";
 import { IconBell, IconInbox, IconInfoCircle, IconLoader2, IconCheck } from "@tabler/icons-react";
 import { toast } from 'react-toastify';
 import { Models } from 'appwrite';

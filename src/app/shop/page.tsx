@@ -5,7 +5,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { IconChevronDown, IconChevronUp, IconMenu2, IconX, IconHeart, IconShoppingCart, IconSearch, IconCategory, IconPackageOff } from '@tabler/icons-react'
-import axios from 'axios'
+import axios from "@/lib/axios";
 import { useRouter, useSearchParams } from 'next/navigation'
 import React, { useEffect, useState, use, Suspense } from 'react'
 import { toast } from 'react-toastify'

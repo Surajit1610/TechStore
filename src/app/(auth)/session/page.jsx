@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/Auth';
 import { redirect } from 'next/navigation';
 import { LoaderOne } from '@/components/ui/loader';
 import { account, avatars} from '@/models/client/config';
-import axios from 'axios';
+import axios from "@/lib/axios";
 
 function setSession() {
     let {setSession} = useAuthStore()
@@ -18,7 +18,7 @@ function setSession() {
 
             console.log(sessionData, userData, jwtData);
             
-            setSession(sessionData, userData, jwtData)
+            setSession(sessionData, userData, jwtData.jwt)
 
 
             const ID = userData.$id

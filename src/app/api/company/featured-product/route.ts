@@ -1,3 +1,4 @@
+import { authenticateServer } from "@/lib/serverAuth";
 import { db, featuredProductTable } from "@/models/name";
 import { tablesDB } from "@/models/server/config";
 import { NextRequest, NextResponse } from "next/server";
@@ -19,6 +20,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     try {
+        const auth = await authenticateServer(req);
+        if (!auth || !auth.user.labels?.includes("owner")) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
         const { title, productIds } = await req.json();
 
         if (!title || !productIds || productIds.length === 0) {

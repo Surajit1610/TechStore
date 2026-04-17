@@ -1,9 +1,13 @@
+import { authenticateServer } from "@/lib/serverAuth";
 import { db, customerTable } from "@/models/name";
-import { tablesDB } from "@/models/server/config";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await authenticateServer(request);
+        if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const tablesDB = auth.dbClient;
+
         const { userID, productID } = await request.json();
 
         const user = await tablesDB.getRow(db, customerTable, userID);
