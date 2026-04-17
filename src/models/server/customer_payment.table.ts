@@ -1,11 +1,13 @@
-import { Permission } from "node-appwrite";
+import { Permission, Role } from "node-appwrite";
 import { db, customerPaymentTable } from "../name";
 import { tablesDB } from "../server/config";
 
 export default async function createCustomerPaymentTable(){
     await tablesDB.createTable(db, customerPaymentTable, customerPaymentTable, [
-       Permission.read("any"),
-    ])
+       Permission.read(Role.users()),
+       Permission.create(Role.users()),
+       Permission.update(Role.users()),
+    ], true)
     console.log("Customer payment table is created");
     
     await Promise.all([

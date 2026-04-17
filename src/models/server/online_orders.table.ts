@@ -1,11 +1,13 @@
-import { Permission } from "node-appwrite";
+import { Permission, Role } from "node-appwrite";
 import { db, onlineOrderTable } from "../name";
 import { tablesDB } from "../server/config";
 
 export default async function createOnlineOrderTable() {
     await tablesDB.createTable(db, onlineOrderTable, onlineOrderTable, [
-        Permission.read("any"),
-    ]);
+        Permission.read(Role.users()),
+        Permission.create(Role.users()),
+        Permission.update(Role.users()),
+    ], true);
     console.log("Online order table is created");
     
     await Promise.all([

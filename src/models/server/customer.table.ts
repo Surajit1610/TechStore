@@ -4,13 +4,11 @@ import { tablesDB } from "../server/config";
 
 export default async function createCustomerTable(){
     await tablesDB.createTable(db, customerTable, customerTable, [
-       Permission.read("any"),
-       Permission.read(Role.label("customer")),
-       Permission.create(Role.label("customer")),
-       Permission.update(Role.label("customer")),
-       Permission.delete(Role.label("customer")),
-       Permission.create("any"),
-    ])
+       Permission.read(Role.users()),
+       Permission.create(Role.users()),
+       Permission.update(Role.users()),
+       Permission.delete(Role.users()),
+    ], true)
     console.log("Customer table is created");
     
     await Promise.all([

@@ -1,11 +1,13 @@
-import { Permission } from "node-appwrite";
+import { Permission, Role } from "node-appwrite";
 import { db, notificationTable } from "../name";
 import { tablesDB } from "../server/config";
 
 export default async function createNotificationTable(){
     await tablesDB.createTable(db, notificationTable, notificationTable, [
-       Permission.read("any"),
-    ])
+       Permission.read(Role.users()),
+       Permission.delete(Role.users()),
+       Permission.update(Role.users()),
+    ], true)
     console.log("Notification table is created");
     
     await Promise.all([

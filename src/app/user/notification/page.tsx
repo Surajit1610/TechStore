@@ -86,7 +86,7 @@ export default function NotificationPage() {
         if (!confirmClear) return;
         
         try {
-            await axios.delete('/api/user/notification', { data: { userId: user.$id } });
+            await axios.delete('/api/user/notification', { data: { userId: user.$id } } as any);
             setNotifications([]);
             toast.success("Notifications cleared successfully");
         } catch (error) {

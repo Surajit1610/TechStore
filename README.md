@@ -1,6 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TechStore - E-Commerce Platform
 
-## Getting Started
+TechStore is a full-stack, aesthetically modern E-Commerce web application built using **Next.js 14**, **TypeScript**, and **Tailwind CSS**. It is designed with robust state-management, real-time database capabilities via **Appwrite**, and fully integrated logistics routing via **Shiprocket**.
+
+## 🚀 Core Technologies
+- **Framework:** Next.js (App Router)
+- **Language:** TypeScript
+- **State Management:** Zustand (Immer & Persistence middleware)
+- **Backend/BaaS:** Appwrite (Auth, Databases, and Real-time WebSockets)
+- **Styling:** Tailwind CSS + Glassmorphism UI
+- **Icons:** Tabler Icons React
+- **Logistics:** Shiprocket API Integration
+
+---
+
+## 🌟 Feature Breakdown
+
+### 🛒 Customer-Facing Features (Frontend)
+1. **Dynamic Shopping Cart:** Add to cart, adjust quantities, and robust checkout validation that accurately mirrors live database prices to prevent exploits.
+2. **Wishlist ("Liked"):** Users can like their favorite products and seamlessly track them.
+3. **Automated Order History:** Customers can browse their robust invoice histories and previous online orders securely.
+4. **Address Management:** A structured multi-address management interface allowing customers to assign custom delivery locations to specific orders.
+5. **Real-time Notifications:** 
+   - Instant WebSocket-driven UI alerts for order statuses.
+   - Built-in "Clear All" read-receipt capabilities.
+6. **Dynamic Theming:** Seamless Dark Mode / Light Mode toggle integrated directly into the Navbar and sidebar.
+7. **Responsive Navigation:** A complete mobile-optimized sidebar overlay paired with a beautiful desktop frosted-glass Navbar.
+
+### 🏢 Admin & Seller Tools (Dashboard)
+1. **Complete Control Panel:** Secure `/dashboard` routes hidden behind role-based (Owner) label permissions validating through Appwrite.
+2. **Product Catalog Management:** Full Create, Read, Update, and Delete (CRUD) operations on all listed products.
+3. **Marketing Controls:**
+   - **Featured Products Configurator:** Control which items appear in premium slots.
+   - **Slider Configurator:** Manage the hero-images and promotional sliders on the front page.
+   - **Notification Broadcasts:** A powerful marketing tool allowing admins to blast customized alerts directly to the real-time notification bells of every registered user.
+4. **Order Management Interface:** Track all incoming `online-orders`, filter by their status, and instantly update delivery milestones.
+
+### 🚚 Advanced Logistics & Checkout (Backend Integration)
+1. **Shiprocket API Connectivity:**
+   - Automated Webhook/Tracking integration via `/api/company/shiprocket-track`.
+   - Direct courier assignment via `/api/company/shiprocket-create-order`.
+   - Robust backend authentication caching utilizing Shiprocket Auth algorithms.
+2. **Immutable Snapshot Invoicing:** To ensure complete financial accuracy, the cart checkout endpoints automatically sever database links at the time of purchase, forcing the order invoice to strictly record the live "price snapshot" of the items. This protects the invoice even if the seller deletes or drastically updates the product listing later on.
+3. **Database Security Definitions:** Granular row-level-security configurations built into Node-Appwrite schema setups (`customerTable`, `onlineOrderTable`, `addressTable`, `notificationTable`).
+
+---
+
+## 💻 Getting Started
 
 First, run the development server:
 
@@ -14,39 +59,7 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result. The environment requires connected `NEXT_PUBLIC_APPWRITE_PROJECT_ID` and `NEXT_PUBLIC_APPWRITE_HOST_URL` variables.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-
-
-NOTE:
-
-2. Database Architecture: Order Item Snapshots vs References
-Where: src/models/server/online_orders.table.ts
-
-The Issue: Your onlineOrderTable stores itemId as an array of strings (references).
-
-Quantity: If a user buys 3 of the same product, how is the quantity stored? If it relies on a Cart item, what happens when the cart is cleared?
-Price Changes: If a seller updates the price of a product next week, or deletes the product entirely, your past orders will either show the new price or break completely, destroying your financial history.
-The Fix: When an order is placed, you must take a "snapshot" of the cart. Instead of just storing an array of references, you should store the exact details at the time of purchase. You can either:
-
-Create an order_items table with columns: orderId, productId, productName, quantity, priceAtPurchase.
-(Alternative) Store a stringified JSON array in the online_orders table containing these details.
+## 🤝 Deployment
+The application is fully architectured around Serverless Edge functions. The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com).

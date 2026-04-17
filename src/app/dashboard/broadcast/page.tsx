@@ -21,7 +21,7 @@ export default function BroadcastPage() {
 
         setIsSubmitting(true);
         try {
-            const res = await axios.post('/api/company/notification/broadcast', { message });
+            const res = await axios.post<{ count: number }>('/api/company/notification/broadcast', { message });
             toast.success(`Successfully sent to ${res.data.count} customers!`);
             setMessage('');
         } catch (error) {

@@ -1,14 +1,14 @@
-import { Permission } from "node-appwrite";
+import { Permission, Role } from "node-appwrite";
 import { db, addressTable } from "../name";
 import { tablesDB } from "../server/config";
 
 export default async function createAddressTable(){
     await tablesDB.createTable(db, addressTable, addressTable, [
-       Permission.read("any"),
-       Permission.create("any"),
-       Permission.update("any"),
-       Permission.delete("any"),
-    ])
+       Permission.read(Role.users()),
+       Permission.create(Role.users()),
+       Permission.update(Role.users()),
+       Permission.delete(Role.users()),
+    ], true)
     console.log("Address table is created");
 
     await Promise.all([
