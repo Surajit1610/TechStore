@@ -11,6 +11,7 @@ import createOnlineOrderTable from "./online_orders.table";
 import createProductTable from "./product.table";
 import createSliderTable from "./slider.table";
 import createSubcategoryTable from "./subcategory.table";
+import createSupportMessageTable from "./support_message.table";
 
 export default async function getOrCreateDB(){
     try {
@@ -33,6 +34,7 @@ export default async function getOrCreateDB(){
                 createProductTable(),
                 createSliderTable(),
                 createSubcategoryTable(),
+                createSupportMessageTable(),
             ])
 
             console.log("Table created");

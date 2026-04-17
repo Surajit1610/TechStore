@@ -18,3 +18,4 @@ export const companyMemberTable = "company_members";
 export const sliderTable = "sliders";
 export const featuredProductTable = "featured_products";
 export const addressTable = "addresses";
+export const supportMessageTable = "support_messages";

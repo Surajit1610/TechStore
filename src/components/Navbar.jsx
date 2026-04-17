@@ -13,7 +13,8 @@ import {
   IconBellFilled, 
   IconMenu2, 
   IconX,
-  IconInfoCircle
+  IconInfoCircle,
+  IconMail
 } from "@tabler/icons-react";
 import Image from 'next/image';  
 import { useRouter, usePathname } from 'next/navigation'; 
@@ -78,6 +79,7 @@ function Navbar() {
     { name: "Home", href: "/", icon: <IconHome size={20} /> },
     { name: "Shop", href: "/shop", icon: <IconBuildingStore size={20} /> },
     { name: "About", href: "/about", icon: <IconInfoCircle size={20} /> },
+    { name: "Contact", href: "/contact", icon: <IconMail size={20} /> },
   ];
 
   return (

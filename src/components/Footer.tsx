@@ -18,6 +18,7 @@ function Footer() {
                 <ul className='space-y-1 text-xs md:text-sm text-gray-600 dark:text-gray-400'>
                   <li><button onClick={() => router.push('/shop')} className='hover:text-green-600'>Shop</button></li>
                   <li><button onClick={() => router.push('/about')} className='hover:text-green-600'>About Us</button></li>
+                  <li><button onClick={() => router.push('/contact')} className='hover:text-green-600'>Contact Us</button></li>
                   <li><button onClick={() => router.push('/login')} className='hover:text-green-600'>Login</button></li>
                 </ul>
               </div>

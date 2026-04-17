@@ -3,13 +3,14 @@
 import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { IconCaretDownFilled, IconDashboard, IconPackage, IconShoppingCart, IconSpeakerphone } from '@tabler/icons-react';
+import { IconCaretDownFilled, IconDashboard, IconPackage, IconShoppingCart, IconSpeakerphone, IconLifebuoy } from '@tabler/icons-react';
 
 const navLinks = [
     { href: "/dashboard", label: "Control Panel", icon: IconDashboard },
     { href: "/dashboard/products", label: "Products", icon: IconPackage },
     { href: "/dashboard/online-orders", label: "Online Orders", icon: IconShoppingCart },
     { href: "/dashboard/broadcast", label: "Broadcast", icon: IconSpeakerphone },
+    { href: "/dashboard/support", label: "Support", icon: IconLifebuoy },
 ];
 
 function CompanyNav() {
